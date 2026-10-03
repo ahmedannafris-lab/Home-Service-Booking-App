@@ -1,0 +1,516 @@
+import { useEffect, useState } from 'react';
+import { SplashScreen } from './components/screens/SplashScreen';
+import { PaymentSuccessScreen } from './components/screens/PaymentSuccessScreen';
+import { PaymentScreen, PaymentMethod } from './components/screens/PaymentScreen';
+import { ScreenId, ServiceItem, Specialist, UserRole, Booking } from './types';
+import { SERVICES, CATEGORIES, SPECIALISTS, INITIAL_BOOKINGS } from './data/mockData';
+import { WalkthroughScreen } from './components/screens/WalkthroughScreen';
+import { RoleSelectionScreen } from './components/screens/RoleSelectionScreen';
+import { LoginScreen } from './components/screens/LoginScreen';
+import { RegisterScreen } from './components/screens/RegisterScreen';
+import { ForgotPasswordScreen } from './components/screens/ForgotPasswordScreen';
+import { HomeScreen } from './components/screens/HomeScreen';
+import { CategoryListScreen } from './components/screens/CategoryListScreen';
+import { CategoryDetailScreen } from './components/screens/CategoryDetailScreen';
+import { ServiceDetailScreen } from './components/screens/ServiceDetailScreen';
+import { BookingScheduleModal } from './components/screens/BookingScheduleModal';
+import { BookingsScreen } from './components/screens/BookingsScreen';
+import { MessagesScreen } from './components/screens/MessagesScreen';
+import { HistoryScreen } from './components/screens/HistoryScreen';
+import { ProfileScreen } from './components/screens/ProfileScreen';
+import { SpecialistProfileModal } from './components/screens/SpecialistProfileModal';
+import { BottomNav } from './components/common/BottomNav';
+import { Toast } from './components/common/Toast';
+import { nextNavigationHistory } from './navigation';
+
+export default function App() {
+  const [currentScreen, setCurrentScreen] = useState<ScreenId>(() => new URLSearchParams(window.location.search).get('screen') === 'payment' ? 'payment' : 'splash');
+  useEffect(() => {
+    if (currentScreen !== 'splash') return;
+    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'payment-success' : screen), 3000);
+    return () => window.clearTimeout(timer);
+  }, [currentScreen]);
+  const [navigationHistory, setNavigationHistory] = useState<ScreenId[]>([]);
+  const [userRole, setUserRole] = useState<UserRole>('customer');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('plumbing');
+  const [selectedService, setSelectedService] = useState<ServiceItem>(SERVICES[0]);
+  const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+  const [checkoutBooking, setCheckoutBooking] = useState<Booking>({
+    id: 'BK-10234', serviceId: 'deep-home-cleaning', serviceTitle: 'Home Cleaning',
+    categoryName: 'Cleaning', date: '12 Aug 2026', timeSlot: '10:00 AM',
+    address: '14/2 Alfred House Gardens, Colombo 03', price: 3500,
+    status: 'scheduled', specialist: SPECIALISTS.alex, createdAt: '12 Aug 2026',
+  });
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [paymentCard, setPaymentCard] = useState('1234');
+
+  // Modals & States
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [serviceToSchedule, setServiceToSchedule] = useState<ServiceItem | null>(null);
+  const [activeSpecialistModal, setActiveSpecialistModal] = useState<Specialist | null>(null);
+  const [activeChatSpecialist, setActiveChatSpecialist] = useState<Specialist | null>(null);
+
+  // App container framing (Mobile iPhone Frame vs Responsive Full-Width vs Full Screen)
+  const [deviceFrame, setDeviceFrame] = useState<'mobile' | 'expanded' | 'full'>('mobile');
+
+  // Interactive Toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => setToastMessage(msg);
+
+  // Forward navigation
+  const navigateTo = (screen: ScreenId) => {
+    if (screen !== currentScreen) {
+      setNavigationHistory((prev) => nextNavigationHistory(prev, currentScreen, screen));
+      setCurrentScreen(screen);
+    }
+  };
+
+  // Back navigation matching prior screen
+  const handleBack = () => {
+    if (currentScreen === 'home') {
+      setNavigationHistory([]);
+      return;
+    }
+    if (navigationHistory.length > 0) {
+      const prevScreen = navigationHistory[navigationHistory.length - 1];
+      setNavigationHistory((prev) => prev.slice(0, -1));
+      setCurrentScreen(prevScreen);
+    } else {
+      // Default natural parent mapping if history is empty
+      switch (currentScreen) {
+        case 'onboarding-2':
+          setCurrentScreen('onboarding-1');
+          break;
+        case 'role-selection':
+          setCurrentScreen('onboarding-1');
+          break;
+        case 'login':
+          setCurrentScreen('role-selection');
+          break;
+        case 'register':
+        case 'forgot-password':
+          setCurrentScreen('login');
+          break;
+        case 'categories':
+          setCurrentScreen('home');
+          break;
+        case 'category-detail':
+          setCurrentScreen('categories');
+          break;
+        case 'service-detail':
+          setCurrentScreen('category-detail');
+          break;
+        case 'bookings':
+        case 'messages':
+        case 'history':
+        case 'profile':
+          setCurrentScreen('home');
+          break;
+        case 'onboarding-1':
+          setCurrentScreen('home');
+          break;
+        default:
+          setCurrentScreen('home');
+      }
+    }
+  };
+
+  // Bottom Navigation visibility (only for main app tabs)
+  const isMainTab = ['home', 'bookings', 'messages', 'history', 'profile', 'categories', 'category-detail'].includes(currentScreen);
+
+  // Handler to create a new booking
+  const handleConfirmBooking = (details: {
+    serviceId: string;
+    serviceTitle: string;
+    categoryName: string;
+    date: string;
+    timeSlot: string;
+    address: string;
+    price: number;
+  }) => {
+    const specialist = SPECIALISTS[selectedService?.specialistId || 'kamal'] || SPECIALISTS.kamal;
+    const newBooking: Booking = {
+      id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
+      serviceId: details.serviceId,
+      serviceTitle: details.serviceTitle,
+      categoryName: details.categoryName,
+      date: details.date,
+      timeSlot: details.timeSlot,
+      address: details.address,
+      price: details.price,
+      status: 'scheduled',
+      specialist,
+      createdAt: 'Just now',
+    };
+
+    setCheckoutBooking(newBooking);
+    setIsScheduleOpen(false);
+    navigateTo('payment');
+  };
+
+  const [isToolbarOpen, setIsToolbarOpen] = useState(true);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-800 flex flex-col items-center justify-center p-0 sm:py-3 sm:px-4 selection:bg-blue-600 selection:text-white font-sans antialiased overflow-x-hidden">
+      {/* Top Floating Mini Toolbar for Prototype Control */}
+      <div className={`w-full max-w-xl px-3 mb-2 flex items-center justify-between gap-2 z-50 ${['splash', 'payment', 'payment-success'].includes(currentScreen) ? 'hidden' : ''}`}>
+        <button
+          onClick={() => setIsToolbarOpen(!isToolbarOpen)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800/90 hover:bg-slate-700 text-white text-xs font-semibold shadow-md backdrop-blur-md border border-slate-700 transition cursor-pointer"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>HomeMate Mobile</span>
+          <span className="material-symbols-outlined text-[16px] text-slate-400">
+            {isToolbarOpen ? 'expand_less' : 'tune'}
+          </span>
+        </button>
+
+        {isToolbarOpen && (
+          <div className="flex items-center gap-2 bg-slate-800/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700 shadow-md text-xs">
+            <span className="text-slate-400 hidden md:inline">Screen:</span>
+            <select
+              value={currentScreen}
+              onChange={(e) => {
+                const screen = e.target.value as ScreenId;
+                navigateTo(screen);
+                if (screen === 'category-detail') setSelectedCategoryId('plumbing');
+              }}
+              className="bg-slate-700 text-white rounded-md px-2 py-1 text-xs border border-slate-600 focus:outline-none focus:border-blue-400 cursor-pointer"
+            >
+              <option value="splash">0. HomeMate Splash</option>
+              <option value="payment-success">Payment Successful</option>
+              <option value="payment">Payment</option>
+              <option value="onboarding-1">1. Walkthrough - Confident Booking</option>
+              <option value="onboarding-2">2. Walkthrough - Live GPS & Support</option>
+              <option value="role-selection">3. Role Selection</option>
+              <option value="login">4. Welcome Back Login</option>
+              <option value="register">5. Create Account</option>
+              <option value="forgot-password">6. Reset Password</option>
+              <option value="home">7. Home Screen</option>
+              <option value="categories">8. Service Categories</option>
+              <option value="category-detail">9. Plumbing Category Detail</option>
+              <option value="service-detail">10. Pipe Installation Detail</option>
+              <option value="bookings">11. Bookings & Live GPS</option>
+              <option value="messages">12. Direct Dispatch Chat</option>
+              <option value="history">13. Service History</option>
+              <option value="profile">14. Account Profile</option>
+            </select>
+
+            <button
+              onClick={() => setDeviceFrame(deviceFrame === 'mobile' ? 'expanded' : 'mobile')}
+              className="text-[11px] px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 cursor-pointer hidden sm:block"
+              title="Toggle Chassis Scale"
+            >
+              {deviceFrame === 'mobile' ? 'Expand' : 'Phone'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Real iPhone Mobile Shell */}
+      <div className="relative my-auto flex items-center justify-center w-full max-w-[420px]">
+        {/* Physical Side Buttons (Left: Action, Volume Up, Volume Down) */}
+        {deviceFrame === 'mobile' && (
+          <>
+            <div className="hidden sm:block absolute -left-[5px] top-[115px] w-[5px] h-[28px] bg-gradient-to-r from-slate-600 to-slate-500 rounded-l-md shadow-xs pointer-events-none z-0"></div>
+            <div className="hidden sm:block absolute -left-[5px] top-[158px] w-[5px] h-[52px] bg-gradient-to-r from-slate-600 to-slate-500 rounded-l-md shadow-xs pointer-events-none z-0"></div>
+            <div className="hidden sm:block absolute -left-[5px] top-[220px] w-[5px] h-[52px] bg-gradient-to-r from-slate-600 to-slate-500 rounded-l-md shadow-xs pointer-events-none z-0"></div>
+            {/* Physical Side Button (Right: Power) */}
+            <div className="hidden sm:block absolute -right-[5px] top-[175px] w-[5px] h-[75px] bg-gradient-to-l from-slate-600 to-slate-500 rounded-r-md shadow-xs pointer-events-none z-0"></div>
+          </>
+        )}
+
+        {/* Outer Titanium Chassis */}
+        <div
+          className={`w-full relative transition-all duration-300 overflow-hidden flex flex-col justify-between ${
+            deviceFrame === 'mobile'
+              ? 'h-screen sm:h-[852px] sm:max-h-[94vh] bg-[#1a1f2c] sm:rounded-[56px] p-0 sm:p-[10px] sm:shadow-[0_0_0_2px_#334155,0_30px_70px_-10px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]'
+              : 'min-h-[880px] bg-[#1a1f2c] sm:rounded-[44px] p-0 sm:p-2 sm:shadow-2xl'
+          }`}
+        >
+          {/* Top Micro Ear Speaker Slit */}
+          {deviceFrame === 'mobile' && (
+            <div className="hidden sm:block absolute top-[5px] left-1/2 -translate-x-1/2 w-14 h-[4px] bg-[#0c0e14] rounded-full z-50 pointer-events-none"></div>
+          )}
+
+          {/* Main Mobile Screen Area */}
+          <main className="w-full h-full bg-white sm:rounded-[46px] overflow-hidden flex flex-col justify-between relative shadow-inner">
+            {/* Render Active Screen container with zero scrollbar */}
+            <div className="flex-1 w-full flex flex-col overflow-hidden relative">
+
+          {currentScreen === 'splash' && <SplashScreen />}
+          {currentScreen === 'payment' && (
+            <PaymentScreen
+              booking={checkoutBooking}
+              service={SERVICES.find((service) => service.id === checkoutBooking.serviceId) || SERVICES[0]}
+              onBack={() => navigateTo('home')}
+              onHelp={() => { setActiveChatSpecialist(checkoutBooking.specialist); navigateTo('messages'); }}
+              onEdit={() => {
+                const service = SERVICES.find((item) => item.id === checkoutBooking.serviceId) || SERVICES[0];
+                setSelectedService(service); setServiceToSchedule(service); setIsScheduleOpen(true);
+              }}
+              onPay={(method, card) => {
+                setPaymentMethod(method); setPaymentCard(card);
+                setBookings((previous) => [checkoutBooking, ...previous.filter((booking) => booking.id !== checkoutBooking.id)]);
+                navigateTo('payment-success');
+              }}
+            />
+          )}
+          {currentScreen === 'payment-success' && (
+            <PaymentSuccessScreen
+              booking={checkoutBooking}
+              method={paymentMethod}
+              card={paymentCard}
+              onViewBooking={() => {
+                setBookings((previous) => previous.some((booking) => booking.id === checkoutBooking.id) ? previous : [checkoutBooking, ...previous]);
+                navigateTo('bookings');
+              }}
+              onBackToHome={() => navigateTo('home')}
+            />
+          )}
+
+          {currentScreen === 'onboarding-1' && (
+            <WalkthroughScreen
+              onGetStarted={() => navigateTo('role-selection')}
+              onSignIn={() => navigateTo('login')}
+              onSkip={() => navigateTo('home')}
+              onBack={handleBack}
+            />
+          )}
+
+          {currentScreen === 'onboarding-2' && (
+            <WalkthroughScreen
+              onGetStarted={() => navigateTo('home')}
+              onSignIn={() => navigateTo('login')}
+              onSkip={() => navigateTo('home')}
+              onBack={handleBack}
+            />
+          )}
+
+          {currentScreen === 'role-selection' && (
+            <RoleSelectionScreen
+              onBack={handleBack}
+              onContinue={(role) => {
+                setUserRole(role);
+                navigateTo('register');
+              }}
+              onPartnerClick={() => {
+                showToast('Opening HomeMate Enterprise Partnership program...');
+              }}
+            />
+          )}
+
+          {currentScreen === 'login' && (
+            <LoginScreen
+              onBack={handleBack}
+              onLoginSuccess={(role) => {
+                setUserRole(role);
+                showToast(`Welcome back, Ahmed! Logged in as ${role}.`);
+                navigateTo('home');
+              }}
+              onForgotPassword={() => navigateTo('forgot-password')}
+              onSignUp={() => navigateTo('register')}
+            />
+          )}
+
+          {currentScreen === 'register' && (
+            <RegisterScreen
+              onBack={handleBack}
+              onRegisterSuccess={() => {
+                showToast('🎉 Account registered successfully! Welcome to HomeMate.');
+                navigateTo('home');
+              }}
+              onLogIn={() => navigateTo('login')}
+            />
+          )}
+
+          {currentScreen === 'forgot-password' && (
+            <ForgotPasswordScreen
+              onBack={handleBack}
+              onCodeSent={(channel, target) => {
+                showToast(`Verification code sent via ${channel} to ${target}!`);
+                navigateTo('login');
+              }}
+              onBackToLogin={() => navigateTo('login')}
+            />
+          )}
+
+          {currentScreen === 'home' && (
+            <HomeScreen
+              onSelectCategory={(catId) => {
+                setSelectedCategoryId(catId);
+                navigateTo('category-detail');
+              }}
+              onViewAllCategories={() => navigateTo('categories')}
+              onSelectService={(serv) => {
+                setSelectedService(serv);
+                navigateTo('service-detail');
+              }}
+              onQuickBook={(serv) => {
+                setSelectedService(serv);
+                setServiceToSchedule(serv);
+                setIsScheduleOpen(true);
+              }}
+              onUrgentHelp={() => {
+                setSelectedCategoryId('plumbing');
+                navigateTo('category-detail');
+                showToast('Urgent dispatch: 16 plumbers ready nearby in Colombo!');
+              }}
+              onOpenNotifications={() => {
+                showToast('Notification: 20% off coupon HOMECOOL20 expires in 3 days');
+              }}
+              onOpenProfile={() => navigateTo('profile')}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'categories' && (
+            <CategoryListScreen
+              onBack={handleBack}
+              onSelectCategory={(catId) => {
+                setSelectedCategoryId(catId);
+                navigateTo('category-detail');
+              }}
+              onCustomQuote={() => {
+                showToast('Connecting you to our Commercial Contracts Team...');
+              }}
+            />
+          )}
+
+          {currentScreen === 'category-detail' && (
+            <CategoryDetailScreen
+              categoryId={selectedCategoryId}
+              onBack={handleBack}
+              onSelectService={(serv) => {
+                setSelectedService(serv);
+                navigateTo('service-detail');
+              }}
+              onBookService={(serv) => {
+                setSelectedService(serv);
+                setServiceToSchedule(serv);
+                setIsScheduleOpen(true);
+              }}
+              onMessageSpecialist={(spec) => {
+                setActiveChatSpecialist(spec);
+                navigateTo('messages');
+              }}
+              onViewSpecialistProfile={(spec) => {
+                setActiveSpecialistModal(spec);
+              }}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'service-detail' && (
+            <ServiceDetailScreen
+              service={selectedService}
+              onBack={handleBack}
+              onScheduleBooking={(serv) => {
+                setServiceToSchedule(serv);
+                setIsScheduleOpen(true);
+              }}
+              onViewSpecialist={(spec) => {
+                setActiveSpecialistModal(spec);
+              }}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'bookings' && (
+            <BookingsScreen
+              bookings={bookings}
+              onOpenChat={(spec) => {
+                setActiveChatSpecialist(spec);
+                navigateTo('messages');
+              }}
+              onCancelBooking={(id) => {
+                setBookings((prev) => prev.filter((b) => b.id !== id));
+                showToast(`Booking ${id} cancelled. 100% refund initiated.`);
+              }}
+              onRebook={(booking) => {
+                const foundService = SERVICES.find((s) => s.id === booking.serviceId) || SERVICES[0];
+                setSelectedService(foundService);
+                setServiceToSchedule(foundService);
+                setIsScheduleOpen(true);
+              }}
+              onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'messages' && (
+            <MessagesScreen
+              activeSpecialist={activeChatSpecialist || SPECIALISTS.alex}
+              onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'history' && (
+            <HistoryScreen
+              bookings={bookings}
+              onRebook={(b) => {
+                const s = SERVICES.find((item) => item.id === b.serviceId) || SERVICES[0];
+                setSelectedService(s);
+                setServiceToSchedule(s);
+                setIsScheduleOpen(true);
+              }}
+              onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'profile' && (
+            <ProfileScreen
+              currentRole={userRole}
+              onSwitchRole={(newRole) => setUserRole(newRole)}
+              onLogout={() => {
+                showToast('Signed out successfully.');
+                navigateTo('login');
+              }}
+              onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+        </div>
+
+        {/* Global Bottom Navigation for Main Tabs */}
+        {(isMainTab || currentScreen === 'payment') && (
+          <BottomNav
+            currentScreen={currentScreen === 'payment' ? 'bookings' : currentScreen}
+            onNavigate={(screen) => navigateTo(screen)}
+            activeBookingsCount={bookings.filter((b) => b.status === 'transit' || b.status === 'scheduled').length}
+            unreadMessagesCount={1}
+          />
+        )}
+          </main>
+        </div>
+      </div>
+
+      {/* Global Booking Modal */}
+      <BookingScheduleModal
+        service={serviceToSchedule}
+        isOpen={isScheduleOpen}
+        onClose={() => setIsScheduleOpen(false)}
+        onConfirm={handleConfirmBooking}
+        showToast={showToast}
+      />
+
+      {/* Global Specialist Profile Modal */}
+      <SpecialistProfileModal
+        specialist={activeSpecialistModal}
+        isOpen={Boolean(activeSpecialistModal)}
+        onClose={() => setActiveSpecialistModal(null)}
+        onSendMessage={(spec) => {
+          setActiveSpecialistModal(null);
+          setActiveChatSpecialist(spec);
+          navigateTo('messages');
+        }}
+        showToast={showToast}
+      />
+
+      {/* Toast Feedback */}
+      <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+    </div>
+  );
+}

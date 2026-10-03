@@ -1,0 +1,6 @@
+{
+  "name": "HomeMate - On-Demand Home Services",
+  "description": "Book verified, background-checked home service experts with upfront pricing, live tracking, and instant support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -4,6 +4,7 @@ export type ScreenId =
   | 'payment'
   | 'onboarding-1'
   | 'onboarding-2'
+  | 'onboarding-3'
   | 'role-selection'
   | 'login'
   | 'register'

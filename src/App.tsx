@@ -3,8 +3,9 @@ import { SplashScreen } from './components/screens/SplashScreen';
 import { PaymentSuccessScreen } from './components/screens/PaymentSuccessScreen';
 import { PaymentScreen, PaymentMethod } from './components/screens/PaymentScreen';
 import { ScreenId, ServiceItem, Specialist, UserRole, Booking } from './types';
-import { SERVICES, CATEGORIES, SPECIALISTS, INITIAL_BOOKINGS } from './data/mockData';
+import { SERVICES, CATEGORIES, SPECIALISTS, INITIAL_BOOKINGS, HERO_FEMALE_PRO, HERO_MALE_TRANSIT } from './data/mockData';
 import { WalkthroughScreen } from './components/screens/WalkthroughScreen';
+import { OnboardingScreen } from './components/screens/OnboardingScreen';
 import { RoleSelectionScreen } from './components/screens/RoleSelectionScreen';
 import { LoginScreen } from './components/screens/LoginScreen';
 import { RegisterScreen } from './components/screens/RegisterScreen';
@@ -21,13 +22,13 @@ import { ProfileScreen } from './components/screens/ProfileScreen';
 import { SpecialistProfileModal } from './components/screens/SpecialistProfileModal';
 import { BottomNav } from './components/common/BottomNav';
 import { Toast } from './components/common/Toast';
-import { nextNavigationHistory } from './navigation';
+import { nextNavigationHistory, getNextOnboardingScreen, getPreviousOnboardingScreen } from './navigation';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(() => new URLSearchParams(window.location.search).get('screen') === 'payment' ? 'payment' : 'splash');
   useEffect(() => {
     if (currentScreen !== 'splash') return;
-    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'payment-success' : screen), 3000);
+    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
     return () => window.clearTimeout(timer);
   }, [currentScreen]);
   const [navigationHistory, setNavigationHistory] = useState<ScreenId[]>([]);
@@ -78,11 +79,17 @@ export default function App() {
     } else {
       // Default natural parent mapping if history is empty
       switch (currentScreen) {
+        case 'onboarding-3':
+          setCurrentScreen('onboarding-2');
+          break;
         case 'onboarding-2':
           setCurrentScreen('onboarding-1');
           break;
+        case 'onboarding-1':
+          setCurrentScreen('home');
+          break;
         case 'role-selection':
-          setCurrentScreen('onboarding-1');
+          setCurrentScreen('onboarding-3');
           break;
         case 'login':
           setCurrentScreen('role-selection');
@@ -104,9 +111,6 @@ export default function App() {
         case 'messages':
         case 'history':
         case 'profile':
-          setCurrentScreen('home');
-          break;
-        case 'onboarding-1':
           setCurrentScreen('home');
           break;
         default:
@@ -182,7 +186,8 @@ export default function App() {
               <option value="payment">Payment</option>
               <option value="onboarding-1">1. Walkthrough - Confident Booking</option>
               <option value="onboarding-2">2. Walkthrough - Live GPS & Support</option>
-              <option value="role-selection">3. Role Selection</option>
+              <option value="onboarding-3">3. Walkthrough - Ready to Book</option>
+              <option value="role-selection">4. Role Selection</option>
               <option value="login">4. Welcome Back Login</option>
               <option value="register">5. Create Account</option>
               <option value="forgot-password">6. Reset Password</option>
@@ -270,19 +275,52 @@ export default function App() {
           )}
 
           {currentScreen === 'onboarding-1' && (
-            <WalkthroughScreen
-              onGetStarted={() => navigateTo('role-selection')}
-              onSignIn={() => navigateTo('login')}
+            <OnboardingScreen
+              pageNumber={1}
+              totalPages={3}
+              title="Book trusted help in minutes"
+              subtitle="Find vetted specialists for cleaning, plumbing, electrical work, and more — all with transparent pricing and same-day support."
+              image={HERO_FEMALE_PRO}
+              badge="1 of 3"
+              accentLabel="Trusted Experts"
+              features={['Verified professionals with real ratings', 'Clear upfront pricing before you book', 'Same-day help when your home needs it now']}
+              onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
               onSkip={() => navigateTo('home')}
+              onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
           )}
 
           {currentScreen === 'onboarding-2' && (
-            <WalkthroughScreen
-              onGetStarted={() => navigateTo('home')}
-              onSignIn={() => navigateTo('login')}
+            <OnboardingScreen
+              pageNumber={2}
+              totalPages={3}
+              title="Track your arrival in real time"
+              subtitle="See your specialist on the map, receive ETA updates, and stay informed as they head to your home."
+              image={HERO_MALE_TRANSIT}
+              badge="2 of 3"
+              accentLabel="Live Tracking"
+              features={['GPS arrival updates from your technician', 'Instant schedule changes and accurate ETAs', 'Clear communication before the job starts']}
+              onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
               onSkip={() => navigateTo('home')}
+              onSignIn={() => navigateTo('login')}
+              onBack={handleBack}
+            />
+          )}
+
+          {currentScreen === 'onboarding-3' && (
+            <OnboardingScreen
+              pageNumber={3}
+              totalPages={3}
+              title="Ready when your home needs it"
+              subtitle="From emergency fixes to planned upgrades, manage appointments, chat with experts, and pay securely after the work is done."
+              image={HERO_FEMALE_PRO}
+              badge="3 of 3"
+              accentLabel="Simple & Secure"
+              features={['Secure payment after work is completed', 'Direct chat with your assigned specialist', 'Manage bookings and service updates in one place']}
+              onNext={() => navigateTo('role-selection')}
+              onSkip={() => navigateTo('home')}
+              onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
           )}

@@ -293,8 +293,7 @@ export const CategoryDetailScreen: React.FC<CategoryDetailScreenProps> = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedService(service);
-                        onBookService(service);
+                        onSelectService(service);
                       }}
                       className="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold active:scale-95 transition-all shadow-sm cursor-pointer"
                     >

@@ -33,18 +33,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const locations = ['Colombo, LK', 'Kandy, LK', 'Galle, LK', 'Negombo, LK', 'Dehiwala, LK'];
-
-  const copyPromo = () => {
-    navigator.clipboard?.writeText('HOMECOOL20');
-    showToast('Promo code "HOMECOOL20" copied! 20% discount applied at checkout.');
-  };
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
+  const featuredCategory = CATEGORIES.find((category) => category.id === 'gardening') ?? CATEGORIES[0];
+  const searchResults = searchQuery.trim()
+    ? services.filter((service) =>
+        `${service.title} ${service.categoryName} ${service.description}`
+          .toLowerCase()
+          .includes(searchQuery.trim().toLowerCase())
+      ).slice(0, 6)
+    : [];
 
   // Filtered popular services
-  const popularServices = services.filter(
-    (s) =>
-      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.categoryName.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 4);
+  const popularServices = services.slice(0, 4);
 
   return (
     <div className="w-full h-full flex flex-col bg-slate-50 pb-6 relative overflow-x-hidden overflow-y-auto no-scrollbar scroll-y-only flex-1">
@@ -106,8 +107,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-1">
-                  <span className="text-xs text-slate-500 font-medium">Good Morning</span>
-                  <span className="text-[14px]">☀️</span>
+                  <span className="text-xs text-slate-500 font-medium">{greeting}</span>
                 </div>
                 <h2 className="text-lg font-bold text-slate-900 tracking-tight">Ahmed</h2>
               </div>
@@ -184,38 +184,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </section>
 
-        {/* Promotional Banner: AC Tune-Up */}
+        {/* Featured service banner */}
         <section className="px-5 py-2">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-5 text-white shadow-md">
-            {/* Ambient Fan background icon */}
-            <div className="absolute right-2 bottom-0 opacity-15 pointer-events-none">
-              <span className="material-symbols-outlined text-[110px] leading-none text-white">mode_fan</span>
-            </div>
-
-            <div className="relative z-10 max-w-[72%]">
+          <div className="relative min-h-[218px] overflow-hidden rounded-2xl bg-slate-900 p-5 text-white shadow-md flex flex-col justify-between">
+            <img src={featuredCategory.heroImage} alt="Gardening service" className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/70 to-slate-900/15" />
+            <div className="relative z-10 max-w-[78%]">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-300 text-cyan-950 text-[10px] font-bold tracking-wide uppercase shadow-xs">
                 <span className="material-symbols-outlined text-[13px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                   bolt
                 </span>
-                Booking Special
+                Featured Service
               </div>
 
               <h3 className="text-lg font-bold text-white mt-2 leading-tight">
-                Get 20% Off Your First AC Tune-up
+                Give your garden a fresh start
               </h3>
-
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-xs text-cyan-200 bg-white/20 px-2.5 py-1 rounded-md font-mono font-bold tracking-wider backdrop-blur-sm select-all">
-                  HOMECOOL20
-                </span>
-                <button
-                  onClick={copyPromo}
-                  className="text-white/90 hover:text-white active:scale-90 transition-transform p-1 rounded-full hover:bg-white/20 flex items-center gap-1 text-xs cursor-pointer"
-                  title="Copy Code"
-                >
-                  <span className="material-symbols-outlined text-[18px]">content_copy</span>
-                </button>
-              </div>
+              <p className="mt-1 text-xs text-white/85">Book a trusted local specialist for garden care.</p>
+            </div>
+            <div className="relative z-10 mt-4 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onSelectCategory(featuredCategory.id)}
+                className="h-9 px-3.5 rounded-lg bg-white text-slate-900 text-xs font-bold hover:bg-cyan-50 transition-colors"
+              >
+                Explore Gardening
+              </button>
             </div>
           </div>
         </section>
@@ -233,15 +227,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 gap-3">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
-                className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-white border border-slate-100 shadow-xs hover:shadow-md hover:border-blue-200 active:scale-95 transition-all text-center cursor-pointer"
+                className="group min-h-[112px] flex flex-col items-center justify-center p-3 rounded-xl bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 active:scale-[0.98] transition-all text-center cursor-pointer"
               >
                 <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center mb-2 transition-transform group-hover:scale-110 ${cat.iconBgClass}`}
+                  className={`w-11 h-11 rounded-lg flex items-center justify-center mb-2 transition-transform group-hover:scale-105 ${cat.iconBgClass}`}
                 >
                   <span className="material-symbols-outlined text-[24px]">{cat.icon}</span>
                 </div>
@@ -273,23 +267,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </section>
 
-        {/* Popular Services Section */}
+        {/* Service search results and popular picks */}
         <section className="px-5 pt-3 pb-2">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Popular Services</h3>
-              <p className="text-xs text-slate-500">Most frequently booked this week</p>
+              <h3 className="text-base font-bold text-slate-900">{searchQuery.trim() ? 'Search Results' : 'Popular Services'}</h3>
+              <p className="text-xs text-slate-500">{searchQuery.trim() ? `${searchResults.length} matching services` : 'Recommended services for your home'}</p>
             </div>
-            <button
-              onClick={onViewAllCategories}
-              className="text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
-            >
-              See All
-            </button>
+            {!searchQuery.trim() && (
+              <button
+                onClick={onViewAllCategories}
+                className="text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
+              >
+                See All
+              </button>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
-            {popularServices.map((service) => (
+            {(searchQuery.trim() ? searchResults : popularServices).map((service) => (
               <article
                 key={service.id}
                 onClick={() => onSelectService(service)}
@@ -338,6 +334,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </button>
               </article>
             ))}
+            {searchQuery.trim() && searchResults.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-7 text-center">
+                <p className="text-sm font-semibold text-slate-800">No matching services</p>
+                <p className="mt-1 text-xs text-slate-500">Try a service or category name.</p>
+              </div>
+            )}
           </div>
         </section>
       </div>

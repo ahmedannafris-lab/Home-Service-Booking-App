@@ -19,6 +19,7 @@ import { BookingsScreen } from './components/screens/BookingsScreen';
 import { MessagesScreen } from './components/screens/MessagesScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
+import { AdminProfileScreen } from './components/screens/AdminProfileScreen';
 import { SpecialistProfileModal } from './components/screens/SpecialistProfileModal';
 import { BottomNav } from './components/common/BottomNav';
 import { Toast } from './components/common/Toast';
@@ -113,6 +114,9 @@ export default function App() {
         case 'history':
         case 'profile':
           setCurrentScreen('home');
+          break;
+        case 'admin-profile':
+          setCurrentScreen('admin-login');
           break;
         default:
           setCurrentScreen('home');
@@ -346,7 +350,7 @@ export default function App() {
               onLoginSuccess={(role) => {
                 setUserRole(role);
                 showToast(`Welcome back, Admin! Logged in as ${role}.`);
-                navigateTo('profile');
+                navigateTo('admin-profile');
               }}
               onForgotPassword={() => navigateTo('forgot-password')}
               onSignUp={() => navigateTo('register')}
@@ -509,6 +513,17 @@ export default function App() {
                 setIsScheduleOpen(true);
               }}
               onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'admin-profile' && (
+            <AdminProfileScreen
+              onBack={handleBack}
+              onLogout={() => {
+                showToast('Signed out successfully.');
+                navigateTo('admin-login');
+              }}
               showToast={showToast}
             />
           )}

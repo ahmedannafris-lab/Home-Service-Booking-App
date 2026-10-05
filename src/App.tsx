@@ -438,11 +438,6 @@ export default function App() {
                 setSelectedService(serv);
                 navigateTo('service-detail');
               }}
-              onQuickBook={(serv) => {
-                setSelectedService(serv);
-                setServiceToSchedule(serv);
-                setIsScheduleOpen(true);
-              }}
               onUrgentHelp={() => {
                 setSelectedCategoryId('plumbing');
                 navigateTo('category-detail');

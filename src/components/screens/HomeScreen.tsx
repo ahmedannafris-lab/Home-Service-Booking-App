@@ -8,7 +8,6 @@ interface HomeScreenProps {
   onSelectCategory: (categoryId: string) => void;
   onViewAllCategories: () => void;
   onSelectService: (service: ServiceItem) => void;
-  onQuickBook: (service: ServiceItem) => void;
   onUrgentHelp: () => void;
   onOpenNotifications: () => void;
   onOpenProfile: () => void;
@@ -21,7 +20,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onSelectCategory,
   onViewAllCategories,
   onSelectService,
-  onQuickBook,
   onUrgentHelp,
   onOpenNotifications,
   onOpenProfile,
@@ -319,7 +317,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onQuickBook(service);
+                    onSelectService(service);
                   }}
                   className="h-8 px-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold active:scale-95 shadow-sm transition-all shrink-0 cursor-pointer"
                 >

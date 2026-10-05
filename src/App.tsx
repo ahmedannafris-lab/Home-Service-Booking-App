@@ -61,6 +61,19 @@ export default function App() {
     window.localStorage.setItem('homemate-services', JSON.stringify(services));
   }, [services]);
 
+  useEffect(() => {
+    const migrationKey = 'homemate-service-catalog-v2';
+    if (window.localStorage.getItem(migrationKey)) return;
+
+    const newServiceIds = new Set(['interior-wall-painting', 'exterior-weatherproof-painting', 'washing-machine-repair', 'refrigerator-cooling-repair']);
+    setServices((currentServices) => {
+      const existingIds = new Set(currentServices.map((service) => service.id));
+      const missingServices = SERVICES.filter((service) => newServiceIds.has(service.id) && !existingIds.has(service.id));
+      return missingServices.length > 0 ? [...currentServices, ...missingServices] : currentServices;
+    });
+    window.localStorage.setItem(migrationKey, 'complete');
+  }, []);
+
   // Modals & States
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [serviceToSchedule, setServiceToSchedule] = useState<ServiceItem | null>(null);

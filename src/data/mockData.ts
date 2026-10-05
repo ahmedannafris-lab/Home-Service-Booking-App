@@ -1,6 +1,7 @@
 import { ServiceCategory, ServiceItem, Specialist, Review, Booking } from '../types';
+import homemateLogoMark from '../assets/homemate-logo-mark.svg';
 
-export const LOGO_URL = 'https://lh3.googleusercontent.com/aida/AEtjO1XbsLdbN2yPrS7915W4vfVFUY6jbVoNX3npCMI_8RktaTkidgpelBeDvAsR67aiLo4mPTtta4qDnkUcDQbNSiZ2qAEreZmzBHq0FDw32_fH1zhDIkKO_DRxb8aN1_6Fl1a8aHXlZQKarZdpiOqrYRmaBVhXwfZL1joTmeQ7gsghucSjWxXxC-pSBBT6MD7crokMwLutj_Xh-D6RbCJSPpv6lB1cpNDCQtkusecbsydOA70MzFAvhqWx3g';
+export const LOGO_URL = homemateLogoMark;
 export const USER_AVATAR = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDWb7iTEl55TTJ6PwLB_iLdkXieK44IXSYDBQU_Z_TCoQaQKK2CAqBgTkOEa_wE2myK8klHG1MmS1TSLkJYZx8oNu5TbADSimNNplUq_2VKBcLv6i97WjvXDp71eL6E9L7Awvlbq18pEVbwiw0JjwtR27Axze6t6dViSZnz0-fLX2dhZ-8N7prn7By_kuvVZooN93WVPlYrC4VLin6cYx5tdT35uVce0LbVpmI_Lj5rKWM3nTpYhiCi';
 
 export const HERO_FEMALE_PRO = 'https://lh3.googleusercontent.com/aida-public/AB6AXuCaBZCm4ZV7k0eEfSp1UI3BCfccAkfJn2jg6qJ8duTEPdoYHSmluZ__pJdxHz20IUYvQqBcATkeSh-fqO_9SccuhuByZ1zrpthIHOuzQWZqxJGFSDOxgmtMOKk_NPICb-TIYMJzAgjgfkTlxwqbp6uooiX84r50BzGWzEtq_SANjbYlRGbVLMkpkNjXKu977hnLuAEwOVsfe-87lJxGnalSMzpLv1Qvbbpef3kS9rV4aDn9v4ul_R0O';

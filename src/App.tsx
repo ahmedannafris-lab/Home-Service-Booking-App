@@ -346,7 +346,7 @@ export default function App() {
               onLoginSuccess={(role) => {
                 setUserRole(role);
                 showToast(`Welcome back, Admin! Logged in as ${role}.`);
-                navigateTo('home');
+                navigateTo('profile');
               }}
               onForgotPassword={() => navigateTo('forgot-password')}
               onSignUp={() => navigateTo('register')}

@@ -7,6 +7,7 @@ export type ScreenId =
   | 'onboarding-3'
   | 'role-selection'
   | 'login'
+  | 'admin-login'
   | 'register'
   | 'forgot-password'
   | 'home'

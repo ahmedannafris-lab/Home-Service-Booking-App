@@ -8,6 +8,7 @@ interface LoginScreenProps {
   onLoginSuccess: (role: UserRole) => void;
   onForgotPassword: () => void;
   onSignUp: () => void;
+  defaultRole?: UserRole;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
@@ -15,8 +16,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSuccess,
   onForgotPassword,
   onSignUp,
+  defaultRole = 'customer',
 }) => {
-  const [role, setRole] = useState<UserRole>('customer');
+  const [role, setRole] = useState<UserRole>(defaultRole);
   const [identifier, setIdentifier] = useState('name@example.com');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
@@ -166,78 +168,81 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </button>
           </div>
 
-          {/* Face ID / Biometrics */}
-          <div>
-            <button
-              type="button"
-              onClick={handleFaceId}
-              className="w-full py-2.5 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-[0.99] text-slate-700 font-medium text-xs rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-blue-600 text-[18px]">face</span>
-              <span>Login with Face ID</span>
-            </button>
-          </div>
+          {role !== 'admin' && (
+            <div>
+              <button
+                type="button"
+                onClick={handleFaceId}
+                className="w-full py-2.5 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 active:scale-[0.99] text-slate-700 font-medium text-xs rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-blue-600 text-[18px]">face</span>
+                <span>Login with Face ID</span>
+              </button>
+            </div>
+          )}
         </form>
 
-        {/* Social Login */}
-        <div className="mt-6 text-center">
-          <div className="relative flex py-1 items-center">
-            <div className="flex-grow border-t border-slate-200"></div>
-            <span className="flex-shrink mx-3 text-slate-400 text-xs tracking-wider uppercase font-medium">
-              Or continue with
-            </span>
-            <div className="flex-grow border-t border-slate-200"></div>
-          </div>
+        {role !== 'admin' && (
+          <div className="mt-6 text-center">
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-slate-200"></div>
+              <span className="flex-shrink mx-3 text-slate-400 text-xs tracking-wider uppercase font-medium">
+                Or continue with
+              </span>
+              <div className="flex-grow border-t border-slate-200"></div>
+            </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <button
-              type="button"
-              onClick={() => onLoginSuccess(role)}
-              className="flex items-center justify-center space-x-2 py-2.5 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition active:scale-95 bg-white shadow-xs cursor-pointer"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z" fill="#4285F4" />
-                <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.13C3.25 21.37 7.33 24 12 24z" fill="#34A853" />
-                <path d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.26C.46 8.18 0 9.99 0 12s.46 3.82 1.26 5.42l4.02-3.13z" fill="#FBBC05" />
-                <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.63 1.26 6.58l4.02 3.13c.95-2.83 3.6-4.96 6.72-4.96z" fill="#EA4335" />
-              </svg>
-              <span className="text-xs font-semibold text-slate-700">Google</span>
-            </button>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => onLoginSuccess(role)}
+                className="flex items-center justify-center space-x-2 py-2.5 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition active:scale-95 bg-white shadow-xs cursor-pointer"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z" fill="#4285F4" />
+                  <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.13C3.25 21.37 7.33 24 12 24z" fill="#34A853" />
+                  <path d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.26C.46 8.18 0 9.99 0 12s.46 3.82 1.26 5.42l4.02-3.13z" fill="#FBBC05" />
+                  <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.63 1.26 6.58l4.02 3.13c.95-2.83 3.6-4.96 6.72-4.96z" fill="#EA4335" />
+                </svg>
+                <span className="text-xs font-semibold text-slate-700">Google</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => onLoginSuccess(role)}
-              className="flex items-center justify-center space-x-2 py-2.5 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition active:scale-95 bg-white shadow-xs cursor-pointer"
-            >
-              <svg className="w-4 h-4 fill-slate-900" viewBox="0 0 170 170">
-                <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.08-7.77-7.93-12.23-14.56-6.19-9.16-11.12-19.9-14.79-32.22-3.67-12.33-5.51-23.75-5.51-34.28 0-14.92 3.8-27.42 11.41-37.5 7.61-10.08 17.1-15.23 28.46-15.46 4.93 0 10.22 1.34 15.87 4.02 5.66 2.68 9.38 4.08 11.18 4.2 1.63-.12 5.56-1.6 11.79-4.43 6.23-2.83 11.73-4.08 16.5-3.77 12.63.74 22.82 5.48 30.56 14.22-10.96 6.64-16.32 15.68-16.08 27.13.25 9.04 3.75 16.66 10.51 22.86 6.76 6.2 14.85 9.87 24.28 11.01-2.12 6.53-4.66 12.92-7.62 19.17zM119.22 33.15c0-6.9 2.52-13.43 7.57-19.58 5.05-6.15 11.37-10.14 18.96-11.97.74 1.77 1.11 3.65 1.11 5.64 0 6.9-2.6 13.56-7.79 19.98-5.19 6.42-11.64 10.36-19.35 11.83-.12-1.77-.5-3.74-.5-5.9z" />
-              </svg>
-              <span className="text-xs font-semibold text-slate-700">Apple</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => onLoginSuccess(role)}
+                className="flex items-center justify-center space-x-2 py-2.5 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition active:scale-95 bg-white shadow-xs cursor-pointer"
+              >
+                <svg className="w-4 h-4 fill-slate-900" viewBox="0 0 170 170">
+                  <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.08-7.77-7.93-12.23-14.56-6.19-9.16-11.12-19.9-14.79-32.22-3.67-12.33-5.51-23.75-5.51-34.28 0-14.92 3.8-27.42 11.41-37.5 7.61-10.08 17.1-15.23 28.46-15.46 4.93 0 10.22 1.34 15.87 4.02 5.66 2.68 9.38 4.08 11.18 4.2 1.63-.12 5.56-1.6 11.79-4.43 6.23-2.83 11.73-4.08 16.5-3.77 12.63.74 22.82 5.48 30.56 14.22-10.96 6.64-16.32 15.68-16.08 27.13.25 9.04 3.75 16.66 10.51 22.86 6.76 6.2 14.85 9.87 24.28 11.01-2.12 6.53-4.66 12.92-7.62 19.17zM119.22 33.15c0-6.9 2.52-13.43 7.57-19.58 5.05-6.15 11.37-10.14 18.96-11.97.74 1.77 1.11 3.65 1.11 5.64 0 6.9-2.6 13.56-7.79 19.98-5.19 6.42-11.64 10.36-19.35 11.83-.12-1.77-.5-3.74-.5-5.9z" />
+                </svg>
+                <span className="text-xs font-semibold text-slate-700">Apple</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Footer */}
-      <footer className="p-6 pt-3 pb-6 text-center bg-white border-t border-slate-100 shrink-0">
-        <p className="text-xs text-slate-600">
-          Don't have an account?{' '}
-          <button
-            type="button"
-            onClick={onSignUp}
-            className="font-semibold text-blue-600 hover:text-blue-700 hover:underline ml-1 cursor-pointer"
-          >
-            Sign Up
-          </button>
-        </p>
+      {role !== 'admin' && (
+        <footer className="p-6 pt-3 pb-6 text-center bg-white border-t border-slate-100 shrink-0">
+          <p className="text-xs text-slate-600">
+            Don't have an account?{' '}
+            <button
+              type="button"
+              onClick={onSignUp}
+              className="font-semibold text-blue-600 hover:text-blue-700 hover:underline ml-1 cursor-pointer"
+            >
+              Sign Up
+            </button>
+          </p>
 
-        <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-          <span className="material-symbols-outlined text-[14px] text-emerald-500">lock</span>
-          <span>256-Bit SSL Encrypted &amp; Protected</span>
-        </div>
+          <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+            <span className="material-symbols-outlined text-[14px] text-emerald-500">lock</span>
+            <span>256-Bit SSL Encrypted &amp; Protected</span>
+          </div>
 
-        <div className="w-32 h-1 bg-slate-300 rounded-full mx-auto mt-3"></div>
-      </footer>
+          <div className="w-32 h-1 bg-slate-300 rounded-full mx-auto mt-3"></div>
+        </footer>
+      )}
     </div>
   );
 };

@@ -91,6 +91,7 @@ export default function App() {
         case 'role-selection':
           setCurrentScreen('onboarding-3');
           break;
+        case 'admin-login':
         case 'login':
           setCurrentScreen('role-selection');
           break;
@@ -330,11 +331,25 @@ export default function App() {
               onBack={handleBack}
               onContinue={(role) => {
                 setUserRole(role);
-                navigateTo('register');
+                navigateTo(role === 'admin' ? 'admin-login' : 'login');
               }}
               onPartnerClick={() => {
                 showToast('Opening HomeMate Enterprise Partnership program...');
               }}
+            />
+          )}
+
+          {currentScreen === 'admin-login' && (
+            <LoginScreen
+              defaultRole="admin"
+              onBack={handleBack}
+              onLoginSuccess={(role) => {
+                setUserRole(role);
+                showToast(`Welcome back, Admin! Logged in as ${role}.`);
+                navigateTo('home');
+              }}
+              onForgotPassword={() => navigateTo('forgot-password')}
+              onSignUp={() => navigateTo('register')}
             />
           )}
 

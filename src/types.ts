@@ -18,7 +18,8 @@ export type ScreenId =
   | 'messages'
   | 'history'
   | 'profile'
-  | 'admin-profile';
+  | 'admin-profile'
+  | 'admin-categories';
 
 export type UserRole = 'customer' | 'provider' | 'admin';
 

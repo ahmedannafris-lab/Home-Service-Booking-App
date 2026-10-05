@@ -20,6 +20,7 @@ import { MessagesScreen } from './components/screens/MessagesScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
 import { AdminProfileScreen } from './components/screens/AdminProfileScreen';
+import { AdminCategoriesScreen } from './components/screens/AdminCategoriesScreen';
 import { SpecialistProfileModal } from './components/screens/SpecialistProfileModal';
 import { BottomNav } from './components/common/BottomNav';
 import { Toast } from './components/common/Toast';
@@ -117,6 +118,9 @@ export default function App() {
           break;
         case 'admin-profile':
           setCurrentScreen('admin-login');
+          break;
+        case 'admin-categories':
+          setCurrentScreen('admin-profile');
           break;
         default:
           setCurrentScreen('home');
@@ -520,13 +524,17 @@ export default function App() {
           {currentScreen === 'admin-profile' && (
             <AdminProfileScreen
               onBack={handleBack}
-              onManageCategories={() => navigateTo('categories')}
+              onManageCategories={() => navigateTo('admin-categories')}
               onLogout={() => {
                 showToast('Signed out successfully.');
                 navigateTo('admin-login');
               }}
               showToast={showToast}
             />
+          )}
+
+          {currentScreen === 'admin-categories' && (
+            <AdminCategoriesScreen onBack={handleBack} />
           )}
 
           {currentScreen === 'profile' && (

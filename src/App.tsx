@@ -22,6 +22,7 @@ import { ProfileScreen } from './components/screens/ProfileScreen';
 import { AdminProfileScreen } from './components/screens/AdminProfileScreen';
 import { AdminCategoriesScreen } from './components/screens/AdminCategoriesScreen';
 import { AdminCategoryServicesScreen } from './components/screens/AdminCategoryServicesScreen';
+import { AdminServiceFormValues } from './components/screens/AdminCategoryServicesScreen';
 import { SpecialistProfileModal } from './components/screens/SpecialistProfileModal';
 import { BottomNav } from './components/common/BottomNav';
 import { Toast } from './components/common/Toast';
@@ -47,6 +48,18 @@ export default function App() {
   });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [paymentCard, setPaymentCard] = useState('1234');
+  const [services, setServices] = useState<ServiceItem[]>(() => {
+    try {
+      const storedServices = window.localStorage.getItem('homemate-services');
+      return storedServices ? JSON.parse(storedServices) as ServiceItem[] : SERVICES;
+    } catch {
+      return SERVICES;
+    }
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem('homemate-services', JSON.stringify(services));
+  }, [services]);
 
   // Modals & States
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -260,11 +273,11 @@ export default function App() {
           {currentScreen === 'payment' && (
             <PaymentScreen
               booking={checkoutBooking}
-              service={SERVICES.find((service) => service.id === checkoutBooking.serviceId) || SERVICES[0]}
+              service={services.find((service) => service.id === checkoutBooking.serviceId) || services[0] || SERVICES[0]}
               onBack={() => navigateTo('home')}
               onHelp={() => { setActiveChatSpecialist(checkoutBooking.specialist); navigateTo('messages'); }}
               onEdit={() => {
-                const service = SERVICES.find((item) => item.id === checkoutBooking.serviceId) || SERVICES[0];
+                const service = services.find((item) => item.id === checkoutBooking.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(service); setServiceToSchedule(service); setIsScheduleOpen(true);
               }}
               onPay={(method, card) => {
@@ -402,6 +415,7 @@ export default function App() {
 
           {currentScreen === 'home' && (
             <HomeScreen
+              services={services}
               onSelectCategory={(catId) => {
                 setSelectedCategoryId(catId);
                 navigateTo('category-detail');
@@ -445,6 +459,7 @@ export default function App() {
           {currentScreen === 'category-detail' && (
             <CategoryDetailScreen
               categoryId={selectedCategoryId}
+              services={services}
               onBack={handleBack}
               onSelectService={(serv) => {
                 setSelectedService(serv);
@@ -493,7 +508,7 @@ export default function App() {
                 showToast(`Booking ${id} cancelled. 100% refund initiated.`);
               }}
               onRebook={(booking) => {
-                const foundService = SERVICES.find((s) => s.id === booking.serviceId) || SERVICES[0];
+                const foundService = services.find((s) => s.id === booking.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(foundService);
                 setServiceToSchedule(foundService);
                 setIsScheduleOpen(true);
@@ -515,7 +530,7 @@ export default function App() {
             <HistoryScreen
               bookings={bookings}
               onRebook={(b) => {
-                const s = SERVICES.find((item) => item.id === b.serviceId) || SERVICES[0];
+                const s = services.find((item) => item.id === b.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(s);
                 setServiceToSchedule(s);
                 setIsScheduleOpen(true);
@@ -550,7 +565,38 @@ export default function App() {
           {currentScreen === 'admin-category-services' && (
             <AdminCategoryServicesScreen
               categoryId={selectedCategoryId}
+              services={services}
               onBack={handleBack}
+              onCreateService={(values: AdminServiceFormValues) => {
+                const category = CATEGORIES.find((item) => item.id === selectedCategoryId) || CATEGORIES[0];
+                const newService: ServiceItem = {
+                  id: `admin-service-${Date.now()}`,
+                  categoryId: category.id,
+                  categoryName: category.name,
+                  title: values.title,
+                  description: values.description,
+                  price: values.price,
+                  rating: 0,
+                  reviewCount: 0,
+                  duration: values.duration,
+                  features: [],
+                  image: category.heroImage,
+                  specialistId: category.specialistId,
+                };
+                setServices((currentServices) => [...currentServices, newService]);
+                showToast(`${newService.title} created successfully.`);
+              }}
+              onUpdateService={(serviceId, values) => {
+                setServices((currentServices) => currentServices.map((service) =>
+                  service.id === serviceId ? { ...service, ...values, originalPrice: undefined } : service
+                ));
+                showToast('Service updated successfully.');
+              }}
+              onDeleteService={(serviceId) => {
+                const removedService = services.find((service) => service.id === serviceId);
+                setServices((currentServices) => currentServices.filter((service) => service.id !== serviceId));
+                if (removedService) showToast(`${removedService.title} deleted.`);
+              }}
             />
           )}
 

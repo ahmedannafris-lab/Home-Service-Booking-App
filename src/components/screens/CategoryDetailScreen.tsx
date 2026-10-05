@@ -5,6 +5,7 @@ import { ServiceCategory, ServiceItem, Specialist } from '../../types';
 
 interface CategoryDetailScreenProps {
   categoryId: string;
+  services: ServiceItem[];
   onBack: () => void;
   onSelectService: (service: ServiceItem) => void;
   onBookService: (service: ServiceItem) => void;
@@ -15,6 +16,7 @@ interface CategoryDetailScreenProps {
 
 export const CategoryDetailScreen: React.FC<CategoryDetailScreenProps> = ({
   categoryId,
+  services,
   onBack,
   onSelectService,
   onBookService,
@@ -33,9 +35,9 @@ export const CategoryDetailScreen: React.FC<CategoryDetailScreenProps> = ({
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
 
   // All category services
-  const categoryServices = SERVICES.filter((s) => s.categoryId === category.id);
+  const categoryServices = services.filter((s) => s.categoryId === category.id);
   // Default to first item selected for the bottom drawer
-  const activeSelected = selectedService || categoryServices[0] || SERVICES[0];
+  const activeSelected = selectedService || categoryServices[0] || services[0] || SERVICES[0];
 
   const filteredServices = categoryServices.filter((s) => {
     const matchesSearch =

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
-import { LOGO_URL, USER_AVATAR, CATEGORIES, SERVICES } from '../../data/mockData';
+import { LOGO_URL, USER_AVATAR, CATEGORIES } from '../../data/mockData';
 import { ServiceItem } from '../../types';
 
 interface HomeScreenProps {
+  services: ServiceItem[];
   onSelectCategory: (categoryId: string) => void;
   onViewAllCategories: () => void;
   onSelectService: (service: ServiceItem) => void;
@@ -16,6 +17,7 @@ interface HomeScreenProps {
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
+  services,
   onSelectCategory,
   onViewAllCategories,
   onSelectService,
@@ -38,7 +40,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   // Filtered popular services
-  const popularServices = SERVICES.filter(
+  const popularServices = services.filter(
     (s) =>
       s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.categoryName.toLowerCase().includes(searchQuery.toLowerCase())

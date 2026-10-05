@@ -520,6 +520,7 @@ export default function App() {
           {currentScreen === 'admin-profile' && (
             <AdminProfileScreen
               onBack={handleBack}
+              onManageCategories={() => navigateTo('categories')}
               onLogout={() => {
                 showToast('Signed out successfully.');
                 navigateTo('admin-login');

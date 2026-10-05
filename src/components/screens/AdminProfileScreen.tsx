@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowLeft, Bell, ChevronRight, KeyRound, LogOut, Mail, ShieldCheck, Tags, UserRound } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Bell, ChevronRight, KeyRound, LogOut, Mail, Pencil, Save, ShieldCheck, Tags, UserRound, X } from 'lucide-react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
 
 interface AdminProfileScreenProps {
@@ -9,12 +9,55 @@ interface AdminProfileScreenProps {
   showToast: (message: string) => void;
 }
 
+interface AdminProfileDetails {
+  name: string;
+  email: string;
+}
+
+const DEFAULT_ADMIN_PROFILE: AdminProfileDetails = {
+  name: 'HomeMate Admin',
+  email: 'admin@homemate.com',
+};
+
+const loadAdminProfile = (): AdminProfileDetails => {
+  try {
+    const storedProfile = window.localStorage.getItem('homemate-admin-profile');
+    return storedProfile ? { ...DEFAULT_ADMIN_PROFILE, ...JSON.parse(storedProfile) as Partial<AdminProfileDetails> } : DEFAULT_ADMIN_PROFILE;
+  } catch {
+    return DEFAULT_ADMIN_PROFILE;
+  }
+};
+
 export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
   onBack,
   onManageCategories,
   onLogout,
   showToast,
-}) => (
+}) => {
+  const [profile, setProfile] = useState<AdminProfileDetails>(loadAdminProfile);
+  const [draftProfile, setDraftProfile] = useState(profile);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const openEditor = () => {
+    setDraftProfile(profile);
+    setIsEditing(true);
+  };
+
+  const saveProfile = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const updatedProfile = {
+      name: draftProfile.name.trim(),
+      email: draftProfile.email.trim(),
+    };
+    if (!updatedProfile.name || !updatedProfile.email) return;
+
+    setProfile(updatedProfile);
+    window.localStorage.setItem('homemate-admin-profile', JSON.stringify(updatedProfile));
+    setIsEditing(false);
+    showToast('Admin profile details updated.');
+  };
+
+  return (
   <div className="w-full h-full flex flex-col bg-slate-50 relative overflow-x-hidden overflow-y-auto no-scrollbar scroll-y-only flex-1">
     <header className="sticky top-0 z-40 bg-white border-b border-slate-100 shrink-0">
       <IOSStatusBar />
@@ -39,8 +82,8 @@ export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Platform administrator</p>
-            <h2 className="mt-1 text-lg font-bold text-slate-900">HomeMate Admin</h2>
-            <p className="mt-1 text-sm text-slate-500 truncate">admin@homemate.com</p>
+            <h2 className="mt-1 text-lg font-bold text-slate-900">{profile.name}</h2>
+            <p className="mt-1 text-sm text-slate-500 truncate">{profile.email}</p>
           </div>
         </div>
         <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
@@ -52,22 +95,31 @@ export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
       </section>
 
       <section aria-labelledby="admin-account-heading">
-        <h2 id="admin-account-heading" className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-          Account details
-        </h2>
+        <div className="mb-2 px-1 flex items-center justify-between gap-3">
+          <h2 id="admin-account-heading" className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            Account details
+          </h2>
+          <button
+            type="button"
+            onClick={openEditor}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800"
+          >
+            <Pencil size={14} />Edit profile details
+          </button>
+        </div>
         <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100 overflow-hidden">
           <div className="px-4 py-4 flex items-center gap-3">
             <UserRound size={18} className="text-slate-500" />
             <div className="min-w-0 flex-1">
               <p className="text-xs text-slate-500">Full name</p>
-              <p className="mt-0.5 text-sm font-semibold text-slate-800">HomeMate Admin</p>
+              <p className="mt-0.5 text-sm font-semibold text-slate-800">{profile.name}</p>
             </div>
           </div>
           <div className="px-4 py-4 flex items-center gap-3">
             <Mail size={18} className="text-slate-500" />
             <div className="min-w-0 flex-1">
               <p className="text-xs text-slate-500">Email address</p>
-              <p className="mt-0.5 text-sm font-semibold text-slate-800 break-all">admin@homemate.com</p>
+              <p className="mt-0.5 text-sm font-semibold text-slate-800 break-all">{profile.email}</p>
             </div>
           </div>
           <div className="px-4 py-4 flex items-center gap-3">
@@ -119,5 +171,52 @@ export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
         Log out
       </button>
     </main>
+
+    {isEditing && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-5" role="presentation">
+        <form
+          onSubmit={saveProfile}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-admin-profile-heading"
+          className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl space-y-4"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="edit-admin-profile-heading" className="text-base font-bold text-slate-900">Edit profile details</h2>
+            <button type="button" onClick={() => setIsEditing(false)} aria-label="Close edit profile" className="p-1 text-slate-500 hover:text-slate-800">
+              <X size={19} />
+            </button>
+          </div>
+          <label className="block text-xs font-semibold text-slate-700">
+            Full name
+            <input
+              required
+              value={draftProfile.name}
+              onChange={(event) => setDraftProfile((draft) => ({ ...draft, name: event.target.value }))}
+              className="mt-1.5 w-full h-11 px-3 rounded-lg border border-slate-200 text-sm font-normal focus:outline-none focus:border-blue-600"
+            />
+          </label>
+          <label className="block text-xs font-semibold text-slate-700">
+            Email address
+            <input
+              required
+              type="email"
+              value={draftProfile.email}
+              onChange={(event) => setDraftProfile((draft) => ({ ...draft, email: event.target.value }))}
+              className="mt-1.5 w-full h-11 px-3 rounded-lg border border-slate-200 text-sm font-normal focus:outline-none focus:border-blue-600"
+            />
+          </label>
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={() => setIsEditing(false)} className="h-10 px-4 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              Cancel
+            </button>
+            <button type="submit" className="h-10 px-4 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 inline-flex items-center gap-1.5">
+              <Save size={15} />Save details
+            </button>
+          </div>
+        </form>
+      </div>
+    )}
   </div>
-);
+  );
+};

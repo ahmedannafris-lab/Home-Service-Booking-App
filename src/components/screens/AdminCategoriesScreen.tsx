@@ -5,9 +5,10 @@ import { IOSStatusBar } from '../common/iOSStatusBar';
 
 interface AdminCategoriesScreenProps {
   onBack: () => void;
+  onSelectCategory: (categoryId: string) => void;
 }
 
-export const AdminCategoriesScreen: React.FC<AdminCategoriesScreenProps> = ({ onBack }) => {
+export const AdminCategoriesScreen: React.FC<AdminCategoriesScreenProps> = ({ onBack, onSelectCategory }) => {
   const [query, setQuery] = useState('');
   const filteredCategories = CATEGORIES.filter((category) =>
     category.name.toLowerCase().includes(query.trim().toLowerCase())
@@ -68,7 +69,12 @@ export const AdminCategoriesScreen: React.FC<AdminCategoriesScreenProps> = ({ on
           </div>
           <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
             {filteredCategories.map((category) => (
-              <div key={category.id} className="px-4 py-3.5 flex items-center gap-3">
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => onSelectCategory(category.id)}
+                className="w-full px-4 py-3.5 flex items-center gap-3 text-left hover:bg-slate-50"
+              >
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${category.iconBgClass}`}>
                   <span className="material-symbols-outlined text-[21px]">{category.icon}</span>
                 </div>
@@ -79,7 +85,7 @@ export const AdminCategoriesScreen: React.FC<AdminCategoriesScreenProps> = ({ on
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Active
                 </span>
-              </div>
+              </button>
             ))}
             {filteredCategories.length === 0 && (
               <p className="px-4 py-8 text-center text-sm text-slate-500">No categories match your search.</p>

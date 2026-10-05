@@ -19,7 +19,8 @@ export type ScreenId =
   | 'history'
   | 'profile'
   | 'admin-profile'
-  | 'admin-categories';
+  | 'admin-categories'
+  | 'admin-category-services';
 
 export type UserRole = 'customer' | 'provider' | 'admin';
 

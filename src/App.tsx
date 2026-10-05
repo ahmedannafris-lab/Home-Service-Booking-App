@@ -21,6 +21,7 @@ import { HistoryScreen } from './components/screens/HistoryScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
 import { AdminProfileScreen } from './components/screens/AdminProfileScreen';
 import { AdminCategoriesScreen } from './components/screens/AdminCategoriesScreen';
+import { AdminCategoryServicesScreen } from './components/screens/AdminCategoryServicesScreen';
 import { SpecialistProfileModal } from './components/screens/SpecialistProfileModal';
 import { BottomNav } from './components/common/BottomNav';
 import { Toast } from './components/common/Toast';
@@ -121,6 +122,9 @@ export default function App() {
           break;
         case 'admin-categories':
           setCurrentScreen('admin-profile');
+          break;
+        case 'admin-category-services':
+          setCurrentScreen('admin-categories');
           break;
         default:
           setCurrentScreen('home');
@@ -534,7 +538,20 @@ export default function App() {
           )}
 
           {currentScreen === 'admin-categories' && (
-            <AdminCategoriesScreen onBack={handleBack} />
+            <AdminCategoriesScreen
+              onBack={handleBack}
+              onSelectCategory={(categoryId) => {
+                setSelectedCategoryId(categoryId);
+                navigateTo('admin-category-services');
+              }}
+            />
+          )}
+
+          {currentScreen === 'admin-category-services' && (
+            <AdminCategoryServicesScreen
+              categoryId={selectedCategoryId}
+              onBack={handleBack}
+            />
           )}
 
           {currentScreen === 'profile' && (

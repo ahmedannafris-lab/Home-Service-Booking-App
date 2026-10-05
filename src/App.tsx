@@ -445,6 +445,7 @@ export default function App() {
 
           {currentScreen === 'categories' && (
             <CategoryListScreen
+              services={services}
               onBack={handleBack}
               onSelectCategory={(catId) => {
                 setSelectedCategoryId(catId);

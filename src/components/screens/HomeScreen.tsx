@@ -164,23 +164,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="What service do you need?"
-              className="w-full h-12 pl-10 pr-20 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 shadow-xs transition-all"
+              className="w-full h-12 pl-10 pr-12 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 shadow-xs transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-12 w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 cursor-pointer"
+                className="absolute right-3 w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[14px]">close</span>
               </button>
             )}
-            <button
-              onClick={() => showToast('Filters: Sorted by closest distance & verified badge')}
-              className="absolute right-1.5 w-9 h-9 rounded-lg bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 active:scale-95 transition-all cursor-pointer"
-              title="Filter"
-            >
-              <span className="material-symbols-outlined text-[18px]">tune</span>
-            </button>
           </div>
         </section>
 

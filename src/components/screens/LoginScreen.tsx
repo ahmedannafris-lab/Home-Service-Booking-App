@@ -24,9 +24,26 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmedIdentifier = identifier.trim();
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmedIdentifier);
+    const phoneDigits = trimmedIdentifier.replace(/\D/g, '');
+    const isPhone = /^[+\d\s().-]+$/.test(trimmedIdentifier) && phoneDigits.length >= 7 && phoneDigits.length <= 15;
+    const nextErrors: { identifier?: string; password?: string } = {};
+
+    if (!isEmail && !isPhone) {
+      nextErrors.identifier = 'Enter a valid email address or phone number.';
+    }
+    if (password.length < 8) {
+      nextErrors.password = 'Password must be at least 8 characters.';
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -94,33 +111,44 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           {/* Email or Phone */}
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-slate-700">Email or Phone Number</label>
-            <div className="relative rounded-xl border border-slate-200 bg-slate-50/50 focus-within:bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+            <div className={`relative rounded-xl border bg-slate-50/50 focus-within:bg-white focus-within:ring-2 transition-all ${errors.identifier ? 'border-rose-500 focus-within:border-rose-500 focus-within:ring-rose-100' : 'border-slate-200 focus-within:border-blue-600 focus-within:ring-blue-100'}`}>
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <span className="material-symbols-outlined text-[18px]">alternate_email</span>
               </div>
               <input
                 type="text"
                 value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                onChange={(e) => {
+                  setIdentifier(e.target.value);
+                  if (errors.identifier) setErrors((current) => ({ ...current, identifier: undefined }));
+                }}
                 required
+                aria-invalid={Boolean(errors.identifier)}
+                aria-describedby={errors.identifier ? 'login-identifier-error' : undefined}
                 placeholder="name@example.com"
                 className="w-full pl-10 pr-3.5 py-3 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 border-0 focus:outline-none focus:ring-0"
               />
             </div>
+            {errors.identifier && <p id="login-identifier-error" role="alert" className="text-xs text-rose-600">{errors.identifier}</p>}
           </div>
 
           {/* Password */}
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-slate-700">Password</label>
-            <div className="relative rounded-xl border border-slate-200 bg-slate-50/50 focus-within:bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+            <div className={`relative rounded-xl border bg-slate-50/50 focus-within:bg-white focus-within:ring-2 transition-all ${errors.password ? 'border-rose-500 focus-within:border-rose-500 focus-within:ring-rose-100' : 'border-slate-200 focus-within:border-blue-600 focus-within:ring-blue-100'}`}>
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <span className="material-symbols-outlined text-[18px]">lock</span>
               </div>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors((current) => ({ ...current, password: undefined }));
+                }}
                 required
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={errors.password ? 'login-password-error' : undefined}
                 placeholder="••••••••••••"
                 className="w-full pl-10 pr-10 py-3 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 border-0 focus:outline-none focus:ring-0 tracking-wider"
               />
@@ -134,6 +162,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </span>
               </button>
             </div>
+            {errors.password && <p id="login-password-error" role="alert" className="text-xs text-rose-600">{errors.password}</p>}
           </div>
 
           {/* Remember Me & Forgot Password */}

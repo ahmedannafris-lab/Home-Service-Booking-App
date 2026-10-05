@@ -36,8 +36,7 @@ export const CategoryDetailScreen: React.FC<CategoryDetailScreenProps> = ({
 
   // All category services
   const categoryServices = services.filter((s) => s.categoryId === category.id);
-  // Default to first item selected for the bottom drawer
-  const activeSelected = selectedService || categoryServices[0] || services[0] || SERVICES[0];
+  const activeSelected = categoryServices.find((service) => service.id === selectedService?.id) || categoryServices[0] || null;
 
   const filteredServices = categoryServices.filter((s) => {
     const matchesSearch =
@@ -167,40 +166,48 @@ export const CategoryDetailScreen: React.FC<CategoryDetailScreenProps> = ({
         </section>
 
         {/* Filter Pills */}
-        <section className="py-2">
-          <div className="flex items-center gap-2 overflow-x-auto px-5 no-scrollbar py-1">
-            {category.filterPills.map((pill) => (
-              <button
-                key={pill}
-                type="button"
-                onClick={() => setActiveFilter(pill)}
-                className={`shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                  activeFilter === pill
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {pill}
-              </button>
-            ))}
-          </div>
-        </section>
+        {categoryServices.length > 0 && (
+          <section className="py-2">
+            <div className="flex items-center gap-2 overflow-x-auto px-5 no-scrollbar py-1">
+              {category.filterPills.map((pill) => (
+                <button
+                  key={pill}
+                  type="button"
+                  onClick={() => setActiveFilter(pill)}
+                  className={`shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                    activeFilter === pill
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {pill}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Services List */}
         <section className="px-5 py-2 flex flex-col gap-3.5">
           {filteredServices.length === 0 ? (
             <div className="text-center py-8 bg-white rounded-2xl border border-dashed border-slate-200">
               <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
-              <p className="text-xs text-slate-500 mt-2">No services found for "{searchWord}".</p>
-              <button
-                onClick={() => {
-                  setSearchWord('');
-                  setActiveFilter('All Services');
-                }}
-                className="mt-2 text-xs font-semibold text-blue-600 hover:underline"
-              >
-                Clear Filters
-              </button>
+              <p className="text-xs text-slate-500 mt-2">
+                {categoryServices.length === 0
+                  ? `No ${category.name.toLowerCase()} services are available yet.`
+                  : `No services found for "${searchWord}".`}
+              </p>
+              {categoryServices.length > 0 && (
+                <button
+                  onClick={() => {
+                    setSearchWord('');
+                    setActiveFilter('All Services');
+                  }}
+                  className="mt-2 text-xs font-semibold text-blue-600 hover:underline"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
           ) : (
             filteredServices.map((service) => {
@@ -319,7 +326,7 @@ export const CategoryDetailScreen: React.FC<CategoryDetailScreenProps> = ({
         </section>
 
         {/* Specialist on Duty Spotlight */}
-        <section className="px-5 py-2">
+        {categoryServices.length > 0 && <section className="px-5 py-2">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-bold text-slate-900">Specialist on Duty</h3>
             <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
@@ -385,10 +392,10 @@ export const CategoryDetailScreen: React.FC<CategoryDetailScreenProps> = ({
               </button>
             </div>
           </div>
-        </section>
+        </section>}
 
         {/* Recent Customer Feedback */}
-        <section className="px-5 py-2">
+        {categoryServices.length > 0 && <section className="px-5 py-2">
           <h3 className="text-sm font-bold text-slate-900 mb-2">Verified Customer Feedback</h3>
           <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
             <div className="flex items-center justify-between mb-2">
@@ -411,11 +418,11 @@ export const CategoryDetailScreen: React.FC<CategoryDetailScreenProps> = ({
             </div>
             <p className="text-xs text-slate-600 leading-relaxed italic">{review.comment}</p>
           </div>
-        </section>
+        </section>}
       </div>
 
       {/* Bottom Booking Summary Drawer */}
-      <aside className="sticky bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-xl z-30 px-5 py-3 transition-transform duration-300 shrink-0">
+      {activeSelected && <aside className="sticky bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-xl z-30 px-5 py-3 transition-transform duration-300 shrink-0">
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
@@ -439,7 +446,7 @@ export const CategoryDetailScreen: React.FC<CategoryDetailScreenProps> = ({
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
         </div>
-      </aside>
+      </aside>}
     </div>
   );
 };

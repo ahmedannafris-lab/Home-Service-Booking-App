@@ -37,9 +37,11 @@ export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
   const [profile, setProfile] = useState<AdminProfileDetails>(loadAdminProfile);
   const [draftProfile, setDraftProfile] = useState(profile);
   const [isEditing, setIsEditing] = useState(false);
+  const [profileErrors, setProfileErrors] = useState<{ name?: string; email?: string }>({});
 
   const openEditor = () => {
     setDraftProfile(profile);
+    setProfileErrors({});
     setIsEditing(true);
   };
 
@@ -49,7 +51,19 @@ export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
       name: draftProfile.name.trim(),
       email: draftProfile.email.trim(),
     };
-    if (!updatedProfile.name || !updatedProfile.email) return;
+    const nextErrors: { name?: string; email?: string } = {};
+
+    if (updatedProfile.name.length < 2 || updatedProfile.name.length > 80) {
+      nextErrors.name = 'Name must be between 2 and 80 characters.';
+    } else if (/\d/.test(updatedProfile.name)) {
+      nextErrors.name = 'Name cannot contain numbers.';
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(updatedProfile.email)) {
+      nextErrors.email = 'Enter a valid email address, such as admin@example.com.';
+    }
+
+    setProfileErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
 
     setProfile(updatedProfile);
     window.localStorage.setItem('homemate-admin-profile', JSON.stringify(updatedProfile));
@@ -176,6 +190,7 @@ export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-5" role="presentation">
         <form
           onSubmit={saveProfile}
+          noValidate
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-admin-profile-heading"
@@ -192,9 +207,16 @@ export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
             <input
               required
               value={draftProfile.name}
-              onChange={(event) => setDraftProfile((draft) => ({ ...draft, name: event.target.value }))}
-              className="mt-1.5 w-full h-11 px-3 rounded-lg border border-slate-200 text-sm font-normal focus:outline-none focus:border-blue-600"
+              maxLength={80}
+              aria-invalid={Boolean(profileErrors.name)}
+              aria-describedby={profileErrors.name ? 'admin-profile-name-error' : undefined}
+              onChange={(event) => {
+                setDraftProfile((draft) => ({ ...draft, name: event.target.value }));
+                if (profileErrors.name) setProfileErrors((errors) => ({ ...errors, name: undefined }));
+              }}
+              className={`mt-1.5 w-full h-11 px-3 rounded-lg border text-sm font-normal focus:outline-none focus:border-blue-600 ${profileErrors.name ? 'border-rose-500' : 'border-slate-200'}`}
             />
+            {profileErrors.name && <span id="admin-profile-name-error" role="alert" className="mt-1 block text-xs font-normal text-rose-600">{profileErrors.name}</span>}
           </label>
           <label className="block text-xs font-semibold text-slate-700">
             Email address
@@ -202,9 +224,15 @@ export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
               required
               type="email"
               value={draftProfile.email}
-              onChange={(event) => setDraftProfile((draft) => ({ ...draft, email: event.target.value }))}
-              className="mt-1.5 w-full h-11 px-3 rounded-lg border border-slate-200 text-sm font-normal focus:outline-none focus:border-blue-600"
+              aria-invalid={Boolean(profileErrors.email)}
+              aria-describedby={profileErrors.email ? 'admin-profile-email-error' : undefined}
+              onChange={(event) => {
+                setDraftProfile((draft) => ({ ...draft, email: event.target.value }));
+                if (profileErrors.email) setProfileErrors((errors) => ({ ...errors, email: undefined }));
+              }}
+              className={`mt-1.5 w-full h-11 px-3 rounded-lg border text-sm font-normal focus:outline-none focus:border-blue-600 ${profileErrors.email ? 'border-rose-500' : 'border-slate-200'}`}
             />
+            {profileErrors.email && <span id="admin-profile-email-error" role="alert" className="mt-1 block text-xs font-normal text-rose-600">{profileErrors.email}</span>}
           </label>
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={() => setIsEditing(false)} className="h-10 px-4 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50">

@@ -15,6 +15,7 @@ import { CategoryDetailScreen } from './components/screens/CategoryDetailScreen'
 import { ServiceDetailScreen } from './components/screens/ServiceDetailScreen';
 import { BookingScheduleModal } from './components/screens/BookingScheduleModal';
 import { BookingsScreen } from './components/screens/BookingsScreen';
+import { AdminBookingsScreen } from './components/screens/AdminBookingsScreen';  // 👈 අලුතෙන්
 import { MessagesScreen } from './components/screens/MessagesScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
@@ -76,7 +77,6 @@ export default function App() {
       setNavigationHistory((prev) => prev.slice(0, -1));
       setCurrentScreen(prevScreen);
     } else {
-      // Default natural parent mapping if history is empty
       switch (currentScreen) {
         case 'onboarding-2':
           setCurrentScreen('onboarding-1');
@@ -104,6 +104,7 @@ export default function App() {
         case 'messages':
         case 'history':
         case 'profile':
+        case 'admin-bookings':   // 👈 අලුතෙන්
           setCurrentScreen('home');
           break;
         case 'onboarding-1':
@@ -194,6 +195,7 @@ export default function App() {
               <option value="messages">12. Direct Dispatch Chat</option>
               <option value="history">13. Service History</option>
               <option value="profile">14. Account Profile</option>
+              <option value="admin-bookings">15. Admin - All Bookings</option>   {/* 👈 අලුතෙන් */}
             </select>
 
             <button
@@ -433,6 +435,14 @@ export default function App() {
                 setServiceToSchedule(foundService);
                 setIsScheduleOpen(true);
               }}
+              onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+
+          {/* 👈 අලුතෙන් එකතු කරන්න */}
+          {currentScreen === 'admin-bookings' && (
+            <AdminBookingsScreen
               onBack={handleBack}
               showToast={showToast}
             />

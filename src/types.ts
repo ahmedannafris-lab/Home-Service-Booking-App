@@ -15,7 +15,8 @@ export type ScreenId =
   | 'bookings'
   | 'messages'
   | 'history'
-  | 'profile';
+  | 'profile'
+  | 'admin-bookings';
 
 export type UserRole = 'customer' | 'provider' | 'admin';
 

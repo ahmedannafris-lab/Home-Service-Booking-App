@@ -10,13 +10,22 @@ interface Props {
   onBack: () => void;
   onEdit: () => void;
   onHelp: () => void;
-  onPay: (method: PaymentMethod, card: string) => void;
+  onPay: (method: PaymentMethod, card: string) => void | Promise<void>;
 }
 
 export function PaymentScreen({ booking, service, onBack, onEdit, onHelp, onPay }: Props) {
   const [method, setMethod] = useState<PaymentMethod>('card');
   const [card, setCard] = useState('4321');
   const [changingCard, setChangingCard] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState('');
+  const handlePay = async () => {
+    if (paying) return;
+    setPaying(true); setError('');
+    try { await onPay(method, card); }
+    catch (error) { setError(error instanceof Error ? error.message : 'Unable to save payment'); }
+    finally { setPaying(false); }
+  };
   const amount = `LKR ${booking.price.toLocaleString('en-US')}`;
   return (
     <section className="flex flex-1 min-h-0 flex-col bg-[#f6f8fb] text-[#213e60]">
@@ -27,6 +36,8 @@ export function PaymentScreen({ booking, service, onBack, onEdit, onHelp, onPay 
         <button onClick={onHelp} className="absolute right-5 rounded-full bg-blue-50 px-3 py-2 text-[10px] font-semibold text-blue-500 cursor-pointer">Need Help?</button>
       </header>
       <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-3">
+        <p className="mb-3 text-xs text-amber-700">Demo checkout: card and online payments are simulated. No money is charged.</p>
+        {error && <p role="alert" className="mb-3 text-xs text-rose-700">{error}</p>}
         <div className="mb-2 flex items-center justify-between"><h2 className="text-[11px] font-bold tracking-wider text-[#95a7bd]">BOOKING SUMMARY</h2><button onClick={onEdit} className="text-xs font-semibold text-blue-500 cursor-pointer">Edit</button></div>
         <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-[0_2px_8px_#18355308]">
           <img src={service.image} alt={booking.serviceTitle} className="h-14 w-14 shrink-0 rounded-xl object-cover" />
@@ -52,7 +63,7 @@ export function PaymentScreen({ booking, service, onBack, onEdit, onHelp, onPay 
         {changingCard && method === 'card' && <label className="mt-3 block text-xs text-slate-500">Demo card ending<input aria-label="Demo card last four digits" value={card} inputMode="numeric" maxLength={4} onChange={(event) => setCard(event.target.value.replace(/\D/g, ''))} className="mt-1 w-full rounded-lg border border-blue-200 bg-white p-2 text-slate-700" /></label>}
         <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-[#e6f7f1] p-3"><span className="rounded-full bg-emerald-100 p-2 text-emerald-600"><ShieldCheck size={17} /></span><div><h3 className="text-[11px] font-bold">Secure Payment Guarantee</h3><p className="mt-1 text-[10px] leading-relaxed text-[#7a91a4]">Your payment information is encrypted and held in escrow until service completion.</p></div></div>
       </div>
-      <footer className="shrink-0 px-5 pb-3 pt-1"><div className="mb-4 flex items-center justify-between"><div><p className="text-[11px] text-[#91a1b8]">Total Amount</p><p className="mt-1 text-[8px] text-emerald-600">Includes taxes & service fees</p></div><strong className="text-xl">{amount}</strong></div><button onClick={() => onPay(method, card)} disabled={method === 'card' && card.length !== 4} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0860c9] py-4 text-sm font-semibold text-white shadow-lg shadow-blue-600/15 hover:bg-blue-700 disabled:opacity-50 cursor-pointer">{method === 'cash' ? 'Confirm Booking' : `Pay ${amount}`}<ArrowRight size={18} /></button></footer>
+      <footer className="shrink-0 px-5 pb-3 pt-1"><div className="mb-4 flex items-center justify-between"><div><p className="text-[11px] text-[#91a1b8]">Total Amount</p><p className="mt-1 text-[8px] text-emerald-600">Includes taxes & service fees</p></div><strong className="text-xl">{amount}</strong></div><button onClick={handlePay} disabled={paying || (method === 'card' && card.length !== 4)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0860c9] py-4 text-sm font-semibold text-white shadow-lg shadow-blue-600/15 hover:bg-blue-700 disabled:opacity-50 cursor-pointer">{paying ? 'Saving...' : method === 'cash' ? 'Confirm Booking' : `Demo Pay ${amount}`}<ArrowRight size={18} /></button></footer>
     </section>
   );
 }

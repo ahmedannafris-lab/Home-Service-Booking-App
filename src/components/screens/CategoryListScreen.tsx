@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
 import { CATEGORIES } from '../../data/mockData';
+import { ServiceItem } from '../../types';
 
 interface CategoryListScreenProps {
+  services: ServiceItem[];
   onBack: () => void;
   onSelectCategory: (categoryId: string) => void;
   onCustomQuote: () => void;
 }
 
 export const CategoryListScreen: React.FC<CategoryListScreenProps> = ({
+  services = [],
   onBack,
   onSelectCategory,
   onCustomQuote,
 }) => {
   const [query, setQuery] = useState('');
 
-  const filteredCategories = CATEGORIES.filter((c) =>
-    c.name.toLowerCase().includes(query.toLowerCase())
+  const filteredCategories = CATEGORIES.filter((category) =>
+    category.name.toLowerCase().includes(query.trim().toLowerCase())
   );
 
   return (
@@ -59,9 +62,20 @@ export const CategoryListScreen: React.FC<CategoryListScreenProps> = ({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search 120+ verified home services..."
-            className="w-full h-12 pl-10 pr-4 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:border-blue-600 shadow-xs"
+            aria-label="Search categories"
+            placeholder="Search categories"
+            className="w-full h-12 pl-10 pr-11 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:border-blue-600 shadow-xs"
           />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Clear category search"
+              className="absolute right-3 w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          )}
         </div>
 
         {/* Section Heading */}
@@ -74,25 +88,41 @@ export const CategoryListScreen: React.FC<CategoryListScreenProps> = ({
 
         {/* Categories Grid (2 Columns like Image 7) */}
         <div className="grid grid-cols-2 gap-3.5">
-          {filteredCategories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => onSelectCategory(cat.id)}
-              className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white border border-slate-100 shadow-xs hover:shadow-md hover:border-blue-300 active:scale-95 transition-all text-center cursor-pointer group"
-            >
-              <div
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform ${cat.iconBgClass}`}
+          {filteredCategories.map((cat) => {
+            const serviceCount = services.filter((service) => service.categoryId === cat.id).length;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => onSelectCategory(cat.id)}
+                aria-label={`View ${cat.name} services`}
+                className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white border border-slate-100 shadow-xs hover:shadow-md hover:border-blue-300 active:scale-95 transition-all text-center cursor-pointer group"
               >
-                <span className="material-symbols-outlined text-[28px]">{cat.icon}</span>
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 leading-tight">{cat.name}</h3>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                <span className="text-xs text-slate-500 font-medium">{cat.specCount} Specialists</span>
-              </div>
-            </button>
-          ))}
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform ${cat.iconBgClass}`}
+                >
+                  <span className="material-symbols-outlined text-[28px]">{cat.icon}</span>
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 leading-tight">{cat.name}</h3>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    {serviceCount} {serviceCount === 1 ? 'service' : 'services'}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
+
+        {filteredCategories.length === 0 && (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center">
+            <p className="text-sm font-semibold text-slate-800">No categories found</p>
+            <p className="mt-1 text-xs text-slate-500">Try a different category name.</p>
+            <button type="button" onClick={() => setQuery('')} className="mt-3 text-xs font-semibold text-blue-700 hover:underline">
+              Clear search
+            </button>
+          </div>
+        )}
 
         {/* 100% Satisfaction Guarantee */}
         <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-center gap-3">

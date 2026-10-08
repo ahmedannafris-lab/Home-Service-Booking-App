@@ -1,14 +1,16 @@
 const mongoose = require("mongoose");
- 
-const connectDB = async () => {
-try {
-await mongoose.connect(process.env.MONGO_URI);
- 
-console.log("MongoDB Connected");
-} catch (error) {
-console.log(error.message);
-process.exit(1);
+
+async function connectDB() {
+  if (!process.env.MONGODB_URI) {
+    throw new Error("MONGODB_URI missing in .env");
+  }
+
+  await mongoose.connect(process.env.MONGODB_URI, {
+    dbName: "homemate",
+    serverSelectionTimeoutMS: 10000,
+  });
+
+  console.log(`MongoDB connected: ${mongoose.connection.name}`);
 }
-};
- 
+
 module.exports = connectDB;

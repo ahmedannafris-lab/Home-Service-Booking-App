@@ -13,7 +13,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
   onContinue,
   onPartnerClick,
 }) => {
-  const [selectedRole, setSelectedRole] = useState<'customer' | 'provider'>('customer');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('customer');
 
   return (
     <div className="w-full flex flex-col justify-between h-full min-h-full bg-white overflow-hidden flex-1">
@@ -136,6 +136,54 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Admin Role Card */}
+          <div
+            onClick={() => setSelectedRole('admin')}
+            className={`group relative rounded-2xl p-5 border-2 transition-all duration-200 cursor-pointer ${
+              selectedRole === 'admin'
+                ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                : 'border-slate-200 bg-white hover:border-slate-300'
+            }`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-3.5 pr-2">
+                <div className="w-11 h-11 rounded-full bg-violet-100 flex items-center justify-center shrink-0 text-violet-600">
+                  <span className="material-symbols-outlined text-[22px]">admin_panel_settings</span>
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900 leading-snug">
+                    I am an Admin / Operations Manager
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Monitor platform performance, oversee service quality, manage teams, and control access across the system.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium bg-violet-100 text-violet-700">
+                      <span className="material-symbols-outlined text-[14px] mr-1">insights</span>
+                      Track Metrics
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium bg-violet-100 text-violet-700">
+                      <span className="material-symbols-outlined text-[14px] mr-1">groups</span>
+                      Manage Teams
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                  selectedRole === 'admin'
+                    ? 'border-blue-600 bg-blue-600 shadow-sm'
+                    : 'border-slate-300 bg-white'
+                }`}
+              >
+                {selectedRole === 'admin' && (
+                  <span className="material-symbols-outlined text-white text-[16px] font-bold">check</span>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -146,7 +194,9 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
           className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-semibold text-sm rounded-xl shadow-md shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 cursor-pointer"
         >
           <span>
-            {selectedRole === 'customer' ? 'Continue as HomeMate User' : 'Continue as Service Provider'}
+            {selectedRole === 'customer' && 'Continue as HomeMate User'}
+            {selectedRole === 'provider' && 'Continue as Service Provider'}
+            {selectedRole === 'admin' && 'Continue as Admin'}
           </span>
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </button>

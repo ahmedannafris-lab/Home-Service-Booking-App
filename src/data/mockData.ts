@@ -1,6 +1,7 @@
 import { ServiceCategory, ServiceItem, Specialist, Review, Booking } from '../types';
+import homemateLogoMark from '../assets/homemate-logo-mark.svg';
 
-export const LOGO_URL = 'https://lh3.googleusercontent.com/aida/AEtjO1XbsLdbN2yPrS7915W4vfVFUY6jbVoNX3npCMI_8RktaTkidgpelBeDvAsR67aiLo4mPTtta4qDnkUcDQbNSiZ2qAEreZmzBHq0FDw32_fH1zhDIkKO_DRxb8aN1_6Fl1a8aHXlZQKarZdpiOqrYRmaBVhXwfZL1joTmeQ7gsghucSjWxXxC-pSBBT6MD7crokMwLutj_Xh-D6RbCJSPpv6lB1cpNDCQtkusecbsydOA70MzFAvhqWx3g';
+export const LOGO_URL = homemateLogoMark;
 export const USER_AVATAR = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDWb7iTEl55TTJ6PwLB_iLdkXieK44IXSYDBQU_Z_TCoQaQKK2CAqBgTkOEa_wE2myK8klHG1MmS1TSLkJYZx8oNu5TbADSimNNplUq_2VKBcLv6i97WjvXDp71eL6E9L7Awvlbq18pEVbwiw0JjwtR27Axze6t6dViSZnz0-fLX2dhZ-8N7prn7By_kuvVZooN93WVPlYrC4VLin6cYx5tdT35uVce0LbVpmI_Lj5rKWM3nTpYhiCi';
 
 export const HERO_FEMALE_PRO = 'https://lh3.googleusercontent.com/aida-public/AB6AXuCaBZCm4ZV7k0eEfSp1UI3BCfccAkfJn2jg6qJ8duTEPdoYHSmluZ__pJdxHz20IUYvQqBcATkeSh-fqO_9SccuhuByZ1zrpthIHOuzQWZqxJGFSDOxgmtMOKk_NPICb-TIYMJzAgjgfkTlxwqbp6uooiX84r50BzGWzEtq_SANjbYlRGbVLMkpkNjXKu977hnLuAEwOVsfe-87lJxGnalSMzpLv1Qvbbpef3kS9rV4aDn9v4ul_R0O';
@@ -522,6 +523,66 @@ export const SERVICES: ServiceItem[] = [
     features: ['Floor Scrubbing', 'Window Detailing', 'Dust Extraction'],
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA1fW7OLbbUWx073FSCHuLnw0rACXLZYnhdrPjxMmEKsHw9lYCrkdw08usMTHlgFtukki04lNu0eiLFwCxBHDf5IBcv2E8W3QGUPkgvck2nBaoOXb50sSzHHwKm79Lq_lg3n2nYPsmHx06SGEwcX5BDTrbuwIqaDd0HWOvSmcNTs8jrzW3kCLGO-Dlo8iefCilqYWF9eoGHGAE2Ohy7GBSsQPm8cGpuZIi-EvW52MmkUg6EIfoGWttb',
     specialistId: 'alex'
+  },
+  {
+    id: 'interior-wall-painting',
+    categoryId: 'painting',
+    categoryName: 'Painting',
+    title: 'Interior Wall Painting',
+    description: 'Refresh interior walls with careful surface preparation, neat masking, and an even low-odor finish.',
+    price: 6500,
+    badge: 'Popular',
+    badgeType: 'primary',
+    rating: 4.8,
+    reviewCount: 86,
+    duration: '4 Hours',
+    features: ['Surface Preparation', 'Low-Odor Paint', 'Room Protection'],
+    image: CATEGORIES.find((category) => category.id === 'painting')?.heroImage ?? HERO_FEMALE_PRO,
+  },
+  {
+    id: 'exterior-weatherproof-painting',
+    categoryId: 'painting',
+    categoryName: 'Painting',
+    title: 'Exterior Weatherproof Painting',
+    description: 'Protect exterior walls with crack filling, weather-resistant coating, and a clean site handover.',
+    price: 9800,
+    badge: 'Weather Ready',
+    badgeType: 'secondary',
+    rating: 4.7,
+    reviewCount: 54,
+    duration: '1 Day',
+    features: ['Crack Filling', 'Weatherproof Coating', 'Exterior Cleanup'],
+    image: CATEGORIES.find((category) => category.id === 'painting')?.heroImage ?? HERO_FEMALE_PRO,
+  },
+  {
+    id: 'washing-machine-repair',
+    categoryId: 'appliances',
+    categoryName: 'Appliances',
+    title: 'Washing Machine Diagnosis & Repair',
+    description: 'Diagnose drainage, spin, and power issues and get a clear repair quote before work begins.',
+    price: 2800,
+    badge: 'Certified Techs',
+    badgeType: 'secondary',
+    rating: 4.8,
+    reviewCount: 73,
+    duration: '60 Mins',
+    features: ['Fault Diagnosis', 'Upfront Quote', 'Safety Check'],
+    image: CATEGORIES.find((category) => category.id === 'appliances')?.heroImage ?? HERO_FEMALE_PRO,
+  },
+  {
+    id: 'refrigerator-cooling-repair',
+    categoryId: 'appliances',
+    categoryName: 'Appliances',
+    title: 'Refrigerator Cooling Repair',
+    description: 'Inspect temperature and airflow problems, check key components, and restore reliable cooling.',
+    price: 3500,
+    badge: 'Home Essential',
+    badgeType: 'tertiary',
+    rating: 4.9,
+    reviewCount: 91,
+    duration: '90 Mins',
+    features: ['Cooling Test', 'Component Check', 'Repair Warranty'],
+    image: CATEGORIES.find((category) => category.id === 'appliances')?.heroImage ?? HERO_FEMALE_PRO,
   }
 ];
 

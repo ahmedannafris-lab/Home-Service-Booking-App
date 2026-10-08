@@ -13,7 +13,8 @@ interface BookingScheduleModalProps {
     timeSlot: string;
     address: string;
     price: number;
-  }) => void;
+    promoCode?: string;
+  }) => void | Promise<void>;
   showToast: (msg: string) => void;
 }
 
@@ -30,6 +31,7 @@ export const BookingScheduleModal: React.FC<BookingScheduleModalProps> = ({
   const [promoCode, setPromoCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [isApplying, setIsApplying] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   if (!isOpen || !service) return null;
 
@@ -253,8 +255,12 @@ export const BookingScheduleModal: React.FC<BookingScheduleModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => {
-              onConfirm({
+            disabled={saving || isApplying}
+            onClick={async () => {
+              if (saving) return;
+              setSaving(true);
+              try {
+              await onConfirm({
                 serviceId: service.id,
                 serviceTitle: service.title,
                 categoryName: service.categoryName,
@@ -262,12 +268,16 @@ export const BookingScheduleModal: React.FC<BookingScheduleModalProps> = ({
                 timeSlot: selectedSlot,
                 address,
                 price: finalTotal,
+                promoCode: discount > 0 ? 'HOMECOOL20' : '',
               });
+              } catch (error) {
+                showToast(error instanceof Error ? error.message : 'Unable to save booking');
+              } finally { setSaving(false); }
             }}
             className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
           >
             <span className="material-symbols-outlined text-[16px]">check</span>
-            Confirm Booking
+            {saving ? 'Saving...' : 'Confirm Booking'}
           </button>
         </div>
       </div>

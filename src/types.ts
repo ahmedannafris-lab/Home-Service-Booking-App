@@ -18,6 +18,7 @@ export type ScreenId =
   | 'messages'
   | 'history'
   | 'profile'
+  | 'admin-bookings';
   | 'admin-profile'
   | 'admin-categories'
   | 'admin-category-services';

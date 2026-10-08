@@ -33,6 +33,7 @@ export default function App() {
   useEffect(() => {
     if (currentScreen !== 'splash') return;
     const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
+    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
     return () => window.clearTimeout(timer);
   }, [currentScreen]);
   const [navigationHistory, setNavigationHistory] = useState<ScreenId[]>([]);
@@ -73,6 +74,11 @@ export default function App() {
     });
     window.localStorage.setItem(migrationKey, 'complete');
   }, []);
+  const [paymentId, setPaymentId] = useState('');
+  const [pendingBooking, setPendingBooking] = useState<{
+    serviceId: string; serviceTitle: string; categoryName: string;
+    date: string; timeSlot: string; address: string; price: number; promoCode?: string;
+  } | null>(null);
 
   // Modals & States
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -162,7 +168,7 @@ export default function App() {
   const isMainTab = ['home', 'bookings', 'messages', 'history', 'profile', 'categories', 'category-detail'].includes(currentScreen);
 
   // Handler to create a new booking
-  const handleConfirmBooking = (details: {
+  const handleConfirmBooking = async (details: {
     serviceId: string;
     serviceTitle: string;
     categoryName: string;
@@ -170,23 +176,43 @@ export default function App() {
     timeSlot: string;
     address: string;
     price: number;
+    promoCode?: string;
   }) => {
+    const token = localStorage.getItem('homemate_token') || sessionStorage.getItem('homemate_token');
+    if (!token) { setPendingBooking(details); showToast('Sign in to continue with this booking.'); setIsScheduleOpen(false); navigateTo('login'); return; }
+    const response = await fetch('http://localhost:5000/api/bookings', {
+      method: 'POST', headers: {'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+      body: JSON.stringify({serviceId:details.serviceId,date:details.date,timeSlot:details.timeSlot,address:details.address,promoCode:details.promoCode || ''}),
+    });
+    const result = await response.json();
+    if (response.status === 401) {
+      localStorage.removeItem('homemate_token');
+      sessionStorage.removeItem('homemate_token');
+      setPendingBooking(details);
+      setIsScheduleOpen(false);
+      showToast('Your session expired. Sign in to continue with this booking.');
+      navigateTo('login');
+      return;
+    }
+    if (!response.ok) throw new Error(result.message || 'Unable to save booking');
     const specialist = SPECIALISTS[selectedService?.specialistId || 'kamal'] || SPECIALISTS.kamal;
     const newBooking: Booking = {
-      id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: result.booking._id,
       serviceId: details.serviceId,
       serviceTitle: details.serviceTitle,
       categoryName: details.categoryName,
       date: details.date,
       timeSlot: details.timeSlot,
       address: details.address,
-      price: details.price,
+      price: result.booking.amountMinor / 100,
       status: 'scheduled',
       specialist,
-      createdAt: 'Just now',
+      createdAt: result.booking.createdAt,
     };
 
     setCheckoutBooking(newBooking);
+    setPendingBooking(null);
+    setPaymentId('');
     setIsScheduleOpen(false);
     navigateTo('payment');
   };
@@ -293,7 +319,16 @@ export default function App() {
                 const service = services.find((item) => item.id === checkoutBooking.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(service); setServiceToSchedule(service); setIsScheduleOpen(true);
               }}
-              onPay={(method, card) => {
+              onPay={async (method, card) => {
+                const token = localStorage.getItem('homemate_token') || sessionStorage.getItem('homemate_token');
+                if (!token) throw new Error('Please log in before payment.');
+                const response = await fetch('http://localhost:5000/api/payments', {
+                  method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+                  body:JSON.stringify({bookingId:checkoutBooking.id,method}),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Unable to save payment');
+                setPaymentId(result.payment._id);
                 setPaymentMethod(method); setPaymentCard(card);
                 setBookings((previous) => [checkoutBooking, ...previous.filter((booking) => booking.id !== checkoutBooking.id)]);
                 navigateTo('payment-success');
@@ -305,6 +340,7 @@ export default function App() {
               booking={checkoutBooking}
               method={paymentMethod}
               card={paymentCard}
+              paymentId={paymentId}
               onViewBooking={() => {
                 setBookings((previous) => previous.some((booking) => booking.id === checkoutBooking.id) ? previous : [checkoutBooking, ...previous]);
                 navigateTo('bookings');
@@ -397,6 +433,13 @@ export default function App() {
               onLoginSuccess={(role) => {
                 setUserRole(role);
                 showToast(`Welcome back, Ahmed! Logged in as ${role}.`);
+                if (pendingBooking) {
+                  void handleConfirmBooking(pendingBooking).catch((error) => {
+                    showToast(error instanceof Error ? error.message : 'Unable to save booking');
+                    navigateTo('home');
+                  });
+                  return;
+                }
                 navigateTo('home');
               }}
               onForgotPassword={() => navigateTo('forgot-password')}
@@ -614,6 +657,10 @@ export default function App() {
               currentRole={userRole}
               onSwitchRole={(newRole) => setUserRole(newRole)}
               onLogout={() => {
+                localStorage.removeItem('homemate_token');
+                localStorage.removeItem('homemate_user');
+                sessionStorage.removeItem('homemate_token');
+                sessionStorage.removeItem('homemate_user');
                 showToast('Signed out successfully.');
                 navigateTo('login');
               }}

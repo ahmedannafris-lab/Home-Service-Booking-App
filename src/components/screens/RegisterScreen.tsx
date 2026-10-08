@@ -13,12 +13,13 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
   onRegisterSuccess,
   onLogIn,
 }) => {
-  const [fullName, setFullName] = useState('John Doe');
-  const [email, setEmail] = useState('johndoe@example.com');
-  const [phone, setPhone] = useState('(555) 012-3456');
-  const [password, setPassword] = useState('SecurePass123!');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [agreed, setAgreed] = useState(true);
+  const [agreed, setAgreed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Calculate password strength
@@ -35,8 +36,9 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
   const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
   const strengthColors = ['bg-rose-500', 'bg-amber-500', 'bg-blue-600', 'bg-emerald-600'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!fullName.trim()) {
       setErrorMsg('Please enter your full name');
       return;
@@ -45,8 +47,65 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
       setErrorMsg('Please accept the Terms of Service to continue');
       return;
     }
+    const digits = phone.replace(/[\s()-]/g, '');
+    const normalizedPhone = digits.startsWith('+94')
+      ? digits
+      : digits.startsWith('94') && digits.length === 11
+        ? `+${digits}`
+        : digits.startsWith('0') && digits.length === 10
+          ? `+94${digits.slice(1)}`
+          : `+94${digits}`;
+
+    if (!/^\+94[0-9]{9}$/.test(normalizedPhone)) {
+      setErrorMsg('Enter a valid Sri Lankan phone number, e.g. 77 123 4567');
+      return;
+    }
+    if (password.length < 8 || !/[0-9]/.test(password)) {
+      setErrorMsg('Password must contain at least 8 characters and one number');
+      return;
+    }
+
     setErrorMsg(null);
-    onRegisterSuccess();
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          email: email.trim(),
+          phone: normalizedPhone,
+          password,
+          role: 'customer',
+          acceptedTerms: agreed,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        const details = data.errors?.map((error: { message: string }) => error.message).join(' ');
+        setErrorMsg(details || data.message || 'Unable to create account');
+        return;
+      }
+      const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const session = await loginResponse.json();
+      if (!loginResponse.ok || !session.token) {
+        setErrorMsg('Account created. Please use Log In to sign in before booking.');
+        return;
+      }
+      localStorage.removeItem('homemate_token');
+      localStorage.removeItem('homemate_user');
+      sessionStorage.setItem('homemate_token', session.token);
+      sessionStorage.setItem('homemate_user', JSON.stringify(session.user));
+      onRegisterSuccess();
+    } catch {
+      setErrorMsg('Unable to reach the backend. Check that it is running on port 5000.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -86,7 +145,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
         </div>
 
         {errorMsg && (
-          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2">
+          <div role="alert" className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">error</span>
             <span>{errorMsg}</span>
           </div>
@@ -144,6 +203,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
               </button>
               <input
                 type="tel"
+                required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="77 123 4567"
@@ -216,9 +276,11 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
           {/* Submit Button */}
           <button
             type="submit"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
             className="w-full mt-2 flex items-center justify-center py-3.5 px-4 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.99] transition duration-150 shadow-lg shadow-blue-500/25 cursor-pointer"
           >
-            Create Account
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
 
@@ -230,7 +292,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={onRegisterSuccess}
+              onClick={() => setErrorMsg('Google signup is not available yet. Please use the form above.')}
               className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 active:scale-[0.98] transition-all shadow-xs cursor-pointer"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -243,7 +305,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
             </button>
             <button
               type="button"
-              onClick={onRegisterSuccess}
+              onClick={() => setErrorMsg('Apple signup is not available yet. Please use the form above.')}
               className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 active:scale-[0.98] transition-all shadow-xs cursor-pointer"
             >
               <svg className="w-4 h-4 fill-current text-slate-900" viewBox="0 0 24 24">

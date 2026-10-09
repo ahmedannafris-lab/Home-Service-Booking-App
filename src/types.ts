@@ -4,8 +4,10 @@ export type ScreenId =
   | 'payment'
   | 'onboarding-1'
   | 'onboarding-2'
+  | 'onboarding-3'
   | 'role-selection'
   | 'login'
+  | 'admin-login'
   | 'register'
   | 'forgot-password'
   | 'home'
@@ -15,7 +17,11 @@ export type ScreenId =
   | 'bookings'
   | 'messages'
   | 'history'
-  | 'profile';
+  | 'profile'
+  | 'admin-bookings';
+  | 'admin-profile'
+  | 'admin-categories'
+  | 'admin-category-services';
 
 export type UserRole = 'customer' | 'provider' | 'admin';
 

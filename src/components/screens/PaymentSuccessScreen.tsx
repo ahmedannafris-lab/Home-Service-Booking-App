@@ -7,12 +7,13 @@ interface Props {
   booking: Booking;
   method: PaymentMethod;
   card: string;
+  paymentId?: string;
   onViewBooking: () => void;
   onBackToHome: () => void;
 }
 
-export function PaymentSuccessScreen({ booking, method, card, onViewBooking, onBackToHome }: Props) {
-  const title = method === 'cash' ? 'Booking Confirmed' : 'Payment Successful';
+export function PaymentSuccessScreen({ booking, method, card, paymentId, onViewBooking, onBackToHome }: Props) {
+  const title = !paymentId ? 'No Payment Recorded' : method === 'cash' ? 'Booking Confirmed' : 'Demo Payment Successful';
   return (
     <section className="payment-success-screen flex flex-1 min-h-0 flex-col bg-[#f6f8fa] text-[#183553]">
       <IOSStatusBar showIsland={false} />
@@ -24,11 +25,11 @@ export function PaymentSuccessScreen({ booking, method, card, onViewBooking, onB
         <div className="flex flex-col items-center pt-8 pb-5 text-center">
           <div className="mb-4 grid h-20 w-20 place-items-center rounded-full border border-emerald-100 bg-[#e7f8f1] text-[#18a878] shadow-[0_0_30px_#e7f8f1]" aria-hidden="true"><Check size={36} strokeWidth={3} /></div>
           <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-          <p className="mt-2 text-[12px] text-[#7c8eaa]">{method === 'cash' ? 'Pay your specialist after service completion.' : 'Your payment has been completed successfully.'}</p>
+          <p className="mt-2 text-[12px] text-[#7c8eaa]">{!paymentId ? 'Create a booking and complete demo checkout first.' : method === 'cash' ? 'Pay your specialist after service completion.' : 'Simulated payment recorded. No money was charged.'}</p>
         </div>
         <dl className="rounded-[18px] border border-[#e2e8f0] bg-white px-4 py-3 text-[11px] shadow-[0_5px_12px_#18355305]">
           {[
-            [method === 'cash' ? 'Payment Status' : 'Payment ID', method === 'cash' ? 'Due after service' : `PAY-${booking.id.replace('BK-', '')}`],
+            [method === 'cash' ? 'Payment Status' : 'Payment ID', paymentId ? method === 'cash' ? 'Due after service' : paymentId : 'Not recorded'],
             ['Booking ID', booking.id],
             ['Service', <span className="flex items-center gap-1.5"><Sparkles size={14} className="text-blue-500" />{booking.serviceTitle}</span>],
             ['Date', booking.date],
@@ -43,7 +44,7 @@ export function PaymentSuccessScreen({ booking, method, card, onViewBooking, onB
         </dl>
         <div className="mt-5 flex items-center gap-3 rounded-xl border border-blue-100 bg-[#f1f7ff] px-3 py-3 text-[10px] text-[#607e9e]">
           <span className="rounded-md bg-white p-1 text-blue-500"><Mail size={16} /></span>
-          A confirmation receipt has been sent to your email.
+          Demo checkout does not send email receipts.
         </div>
       </div>
       <footer className="shrink-0 px-6 pt-3 pb-7 space-y-3">

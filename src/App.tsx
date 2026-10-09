@@ -34,7 +34,6 @@ export default function App() {
   useEffect(() => {
     if (currentScreen !== 'splash') return;
     const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
-    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
     return () => window.clearTimeout(timer);
   }, [currentScreen]);
   const [navigationHistory, setNavigationHistory] = useState<ScreenId[]>([]);

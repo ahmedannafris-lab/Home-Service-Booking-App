@@ -363,7 +363,7 @@ export default function App() {
               accentLabel="Trusted Experts"
               features={['Verified professionals with real ratings', 'Clear upfront pricing before you book', 'Same-day help when your home needs it now']}
               onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
-              onSkip={() => navigateTo('home')}
+              onSkip={() => navigateTo('role-selection')}
               onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
@@ -380,7 +380,7 @@ export default function App() {
               accentLabel="Live Tracking"
               features={['GPS arrival updates from your technician', 'Instant schedule changes and accurate ETAs', 'Clear communication before the job starts']}
               onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
-              onSkip={() => navigateTo('home')}
+              onSkip={() => navigateTo('role-selection')}
               onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
@@ -397,7 +397,7 @@ export default function App() {
               accentLabel="Simple & Secure"
               features={['Secure payment after work is completed', 'Direct chat with your assigned specialist', 'Manage bookings and service updates in one place']}
               onNext={() => navigateTo('role-selection')}
-              onSkip={() => navigateTo('home')}
+              onSkip={() => navigateTo('role-selection')}
               onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />

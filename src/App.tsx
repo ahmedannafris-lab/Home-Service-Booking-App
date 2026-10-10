@@ -307,7 +307,7 @@ export default function App() {
         <div
           className={`w-full relative transition-all duration-300 overflow-hidden flex flex-col justify-between ${
             deviceFrame === 'mobile'
-              ? 'h-screen sm:h-[852px] sm:max-h-[94vh] bg-[#1a1f2c] sm:rounded-[56px] p-0 sm:p-[10px] sm:shadow-[0_0_0_2px_#334155,0_30px_70px_-10px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]'
+              ? 'h-screen sm:h-[852px] sm:max-h-[94vh] bg-[#1a1f2c] sm:rounded-[72px] p-0 sm:p-3 sm:border sm:border-slate-500/70 sm:shadow-[0_0_0_2px_#334155,0_30px_70px_-10px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]'
               : 'min-h-[880px] bg-[#1a1f2c] sm:rounded-[44px] p-0 sm:p-2 sm:shadow-2xl'
           }`}
         >
@@ -317,7 +317,7 @@ export default function App() {
           )}
 
           {/* Main Mobile Screen Area */}
-          <main className="w-full h-full bg-white sm:rounded-[46px] overflow-hidden flex flex-col justify-between relative shadow-inner">
+          <main className="w-full h-full bg-white sm:rounded-[44px] overflow-hidden flex flex-col justify-between relative shadow-inner">
             {/* Render Active Screen container with zero scrollbar */}
             <div className="flex-1 w-full flex flex-col overflow-hidden relative">
 

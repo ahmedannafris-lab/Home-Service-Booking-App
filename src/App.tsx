@@ -33,8 +33,11 @@ export default function App() {
   useEffect(() => {
     if (currentScreen !== 'splash') return;
     const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
-    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
-    return () => window.clearTimeout(timer);
+    const secondTimer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(secondTimer);
+    };
   }, [currentScreen]);
   const [navigationHistory, setNavigationHistory] = useState<ScreenId[]>([]);
   const [userRole, setUserRole] = useState<UserRole>('customer');

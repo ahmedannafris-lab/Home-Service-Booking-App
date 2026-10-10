@@ -32,15 +32,28 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(() => new URLSearchParams(window.location.search).get('screen') === 'payment' ? 'payment' : 'splash');
   useEffect(() => {
     if (currentScreen !== 'splash') return;
-    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
-    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
-    return () => window.clearTimeout(timer);
+    const initialSplashTimer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
+    const fallbackSplashTimer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
+    return () => {
+      window.clearTimeout(initialSplashTimer);
+      window.clearTimeout(fallbackSplashTimer);
+    };
   }, [currentScreen]);
   const [navigationHistory, setNavigationHistory] = useState<ScreenId[]>([]);
   const [userRole, setUserRole] = useState<UserRole>('customer');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('plumbing');
   const [selectedService, setSelectedService] = useState<ServiceItem>(SERVICES[0]);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+  const [deletedHistoryIds, setDeletedHistoryIds] = useState<string[]>(() => {
+    try {
+      const storedIds = window.localStorage.getItem('homemate-deleted-history');
+      const parsedIds: unknown = storedIds ? JSON.parse(storedIds) : [];
+      return Array.isArray(parsedIds) && parsedIds.every((id): id is string => typeof id === 'string') ? parsedIds : [];
+    } catch (error) {
+      console.error('Unable to load deleted service history:', error);
+      return [];
+    }
+  });
   const [checkoutBooking, setCheckoutBooking] = useState<Booking>({
     id: 'BK-10234', serviceId: 'deep-home-cleaning', serviceTitle: 'Home Cleaning',
     categoryName: 'Cleaning', date: '12 Aug 2026', timeSlot: '10:00 AM',
@@ -294,7 +307,7 @@ export default function App() {
         <div
           className={`w-full relative transition-all duration-300 overflow-hidden flex flex-col justify-between ${
             deviceFrame === 'mobile'
-              ? 'h-screen sm:h-[852px] sm:max-h-[94vh] bg-[#1a1f2c] sm:rounded-[56px] p-0 sm:p-[10px] sm:shadow-[0_0_0_2px_#334155,0_30px_70px_-10px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]'
+              ? 'h-screen sm:h-[852px] sm:max-h-[94vh] bg-[#1a1f2c] sm:rounded-[72px] p-0 sm:p-3 sm:border sm:border-slate-500/70 sm:shadow-[0_0_0_2px_#334155,0_30px_70px_-10px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]'
               : 'min-h-[880px] bg-[#1a1f2c] sm:rounded-[44px] p-0 sm:p-2 sm:shadow-2xl'
           }`}
         >
@@ -304,7 +317,7 @@ export default function App() {
           )}
 
           {/* Main Mobile Screen Area */}
-          <main className="w-full h-full bg-white sm:rounded-[46px] overflow-hidden flex flex-col justify-between relative shadow-inner">
+          <main className="w-full h-full bg-white sm:rounded-[44px] overflow-hidden flex flex-col justify-between relative shadow-inner">
             {/* Render Active Screen container with zero scrollbar */}
             <div className="flex-1 w-full flex flex-col overflow-hidden relative">
 
@@ -360,7 +373,7 @@ export default function App() {
               accentLabel="Trusted Experts"
               features={['Verified professionals with real ratings', 'Clear upfront pricing before you book', 'Same-day help when your home needs it now']}
               onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
-              onSkip={() => navigateTo('home')}
+              onSkip={() => navigateTo('role-selection')}
               onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
@@ -377,7 +390,7 @@ export default function App() {
               accentLabel="Live Tracking"
               features={['GPS arrival updates from your technician', 'Instant schedule changes and accurate ETAs', 'Clear communication before the job starts']}
               onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
-              onSkip={() => navigateTo('home')}
+              onSkip={() => navigateTo('role-selection')}
               onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
@@ -394,7 +407,7 @@ export default function App() {
               accentLabel="Simple & Secure"
               features={['Secure payment after work is completed', 'Direct chat with your assigned specialist', 'Manage bookings and service updates in one place']}
               onNext={() => navigateTo('role-selection')}
-              onSkip={() => navigateTo('home')}
+              onSkip={() => navigateTo('role-selection')}
               onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
@@ -419,8 +432,13 @@ export default function App() {
               onBack={handleBack}
               onLoginSuccess={(role) => {
                 setUserRole(role);
-                showToast(`Welcome back, Admin! Logged in as ${role}.`);
-                navigateTo('admin-profile');
+                if (role === 'admin') {
+                  showToast('Welcome back, Admin!');
+                  navigateTo('admin-profile');
+                  return;
+                }
+                showToast(`Welcome back! Logged in as ${role}.`);
+                navigateTo('home');
               }}
               onForgotPassword={() => navigateTo('forgot-password')}
               onSignUp={() => navigateTo('register')}
@@ -432,6 +450,11 @@ export default function App() {
               onBack={handleBack}
               onLoginSuccess={(role) => {
                 setUserRole(role);
+                if (role === 'admin') {
+                  showToast('Welcome back, Admin!');
+                  navigateTo('admin-profile');
+                  return;
+                }
                 showToast(`Welcome back, Ahmed! Logged in as ${role}.`);
                 if (pendingBooking) {
                   void handleConfirmBooking(pendingBooking).catch((error) => {
@@ -580,7 +603,17 @@ export default function App() {
 
           {currentScreen === 'history' && (
             <HistoryScreen
-              bookings={bookings}
+              bookings={bookings.filter((booking) => !deletedHistoryIds.includes(booking.id))}
+              onDelete={(bookingId) => {
+                const nextDeletedIds = [...new Set([...deletedHistoryIds, bookingId])];
+                try {
+                  window.localStorage.setItem('homemate-deleted-history', JSON.stringify(nextDeletedIds));
+                  setDeletedHistoryIds(nextDeletedIds);
+                  showToast('Service removed from history. The booking was not cancelled.');
+                } catch {
+                  showToast('Unable to delete this history item. Please check your browser storage and try again.');
+                }
+              }}
               onRebook={(b) => {
                 const s = services.find((item) => item.id === b.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(s);
@@ -655,7 +688,6 @@ export default function App() {
           {currentScreen === 'profile' && (
             <ProfileScreen
               currentRole={userRole}
-              onSwitchRole={(newRole) => setUserRole(newRole)}
               onLogout={() => {
                 localStorage.removeItem('homemate_token');
                 localStorage.removeItem('homemate_user');

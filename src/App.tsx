@@ -4,6 +4,7 @@ import { PaymentSuccessScreen } from './components/screens/PaymentSuccessScreen'
 import { PaymentScreen, PaymentMethod } from './components/screens/PaymentScreen';
 import type { OnlineProvider } from './components/screens/OnlinePaymentScreen';
 import { ScreenId, ServiceItem, Specialist, UserRole, Booking } from './types';
+import { API_BASE_URL } from './config/api';
 import { SERVICES, CATEGORIES, SPECIALISTS, INITIAL_BOOKINGS, HERO_FEMALE_PRO, HERO_MALE_TRANSIT } from './data/mockData';
 import { WalkthroughScreen } from './components/screens/WalkthroughScreen';
 import { OnboardingScreen } from './components/screens/OnboardingScreen';
@@ -227,7 +228,7 @@ export default function App() {
   }) => {
     const token = localStorage.getItem('homemate_token') || sessionStorage.getItem('homemate_token');
     if (!token) { setPendingBooking(details); showToast('Sign in to continue with this booking.'); setIsScheduleOpen(false); navigateTo('login'); return; }
-    const response = await fetch('http://localhost:5000/api/bookings', {
+    const response = await fetch(`${API_BASE_URL}/api/bookings`, {
       method: 'POST', headers: {'Content-Type':'application/json', Authorization:`Bearer ${token}`},
       body: JSON.stringify({serviceId:details.serviceId,date:details.date,timeSlot:details.timeSlot,address:details.address,promoCode:details.promoCode || ''}),
     });
@@ -382,6 +383,7 @@ export default function App() {
                 let response: Response;
                 try {
                   response = await fetch('http://localhost:5000/api/payments', {
+                const response = await fetch(`${API_BASE_URL}/api/payments`, {
                   method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
                   body:JSON.stringify({bookingId:checkoutBooking.id,method,...(method === 'card' ? {cardLastFour:card} : {}),...(method === 'online' ? {onlineProvider:online?.provider,mobileNumber:online?.mobileNumber} : {})}),
                   signal: AbortSignal.timeout(15000),

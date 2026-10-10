@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { LOGO_URL } from '../../data/mockData';
+import { API_BASE_URL } from '../../config/api';
 
 interface RegisterScreenProps {
   onBack: () => void;
@@ -68,6 +69,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
     setIsSubmitting(true);
     try {
       const response = await fetch(`${window.location.protocol}//${window.location.hostname}:5000/api/auth/register`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -85,6 +87,20 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
         setErrorMsg(details || data.message || 'Unable to create account');
         return;
       }
+      const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const session = await loginResponse.json();
+      if (!loginResponse.ok || !session.token) {
+        setErrorMsg('Account created. Please use Log In to sign in before booking.');
+        return;
+      }
+      localStorage.removeItem('homemate_token');
+      localStorage.removeItem('homemate_user');
+      sessionStorage.setItem('homemate_token', session.token);
+      sessionStorage.setItem('homemate_user', JSON.stringify(session.user));
       onRegisterSuccess();
     } catch {
       setErrorMsg('Unable to reach the backend. Check that it is running on port 5000.');

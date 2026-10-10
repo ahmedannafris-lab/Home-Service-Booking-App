@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
 import { BrandLogo } from '../common/BrandLogo';
 import { UserRole } from '../../types';
+import { API_BASE_URL } from '../../config/api';
 
 interface LoginScreenProps {
   onBack: () => void;
@@ -26,6 +27,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
   const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
+  const [identifier, setIdentifier] = useState(
+    defaultRole === 'admin'
+      ? 'admin@homemate.com'
+      : defaultRole === 'provider'
+      ? 'provider@homemate.com'
+      : 'customer@homemate.com'
+  );
+  const [password, setPassword] = useState('Password123');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ identifier?: string; password?: string; general?: string }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +47,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     const trimmedIdentifier = identifier.trim();
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmedIdentifier);
     const nextErrors: { identifier?: string; password?: string } = {};
+    const phoneDigits = trimmedIdentifier.replace(/\D/g, '');
+    const isPhone = /^[+\d\s().-]+$/.test(trimmedIdentifier) && phoneDigits.length >= 7 && phoneDigits.length <= 15;
+    const nextErrors: { identifier?: string; password?: string; general?: string } = {};
 
     if (!isEmail) {
       nextErrors.identifier = 'Enter your registered email address.';
@@ -68,6 +84,38 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       setServerError(cause instanceof TypeError || (cause instanceof Error && cause.name === 'TimeoutError') ? 'Cannot reach the server. Check that the backend is running.' : cause instanceof Error ? cause.message : 'Unable to log in.');
     } finally {
       setLoading(false);
+    setErrors({});
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: trimmedIdentifier, password, role }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.token) {
+        setErrors({ general: data.message || 'Invalid email/phone or password.' });
+        setLoading(false);
+        return;
+      }
+
+      localStorage.removeItem('homemate_token');
+      localStorage.removeItem('homemate_user');
+      if (rememberMe) {
+        localStorage.setItem('homemate_token', data.token);
+        localStorage.setItem('homemate_user', JSON.stringify(data.user));
+      }
+      sessionStorage.setItem('homemate_token', data.token);
+      sessionStorage.setItem('homemate_user', JSON.stringify(data.user));
+
+      setLoading(false);
+      onLoginSuccess(data.user?.role || role);
+      return;
+    } catch {
+      setErrors({ general: 'Unable to reach backend server. Please ensure backend is running on port 5000.' });
+      setLoading(false);
+      return;
     }
   };
 
@@ -110,6 +158,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               type="button"
               disabled={loading}
               onClick={() => { setRole(r); setServerError(''); }}
+              onClick={() => {
+                setRole(r);
+                setErrors({});
+                if (r === 'admin') {
+                  setIdentifier('admin@homemate.com');
+                  setPassword('Password123');
+                } else if (r === 'provider') {
+                  setIdentifier('provider@homemate.com');
+                  setPassword('Password123');
+                } else {
+                  setIdentifier('customer@homemate.com');
+                  setPassword('Password123');
+                }
+              }}
               className={`flex-1 py-2 text-center rounded-lg capitalize transition-all cursor-pointer ${
                 role === r
                   ? 'bg-blue-600 text-white font-semibold shadow-sm'
@@ -124,6 +186,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         {/* Auth Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {serverError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-xs leading-5 text-rose-700">{serverError}</p>}
+          {errors.general && (
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center space-x-2">
+              <span className="material-symbols-outlined text-[18px] shrink-0 text-rose-600">error</span>
+              <span>{errors.general}</span>
+            </div>
+          )}
           {/* Email or Phone */}
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-slate-700">Email Address</label>

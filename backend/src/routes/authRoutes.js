@@ -93,10 +93,21 @@ router.post(
       .bail()
       .notEmpty()
       .withMessage("Password is required"),
+    body("role")
+      .optional()
+      .isIn(["customer", "provider", "admin"])
+      .withMessage("Invalid role"),
   ],
   (req, res, next) => {
-    const errors = validationResult(req);
+    const identifier = req.body.identifier || req.body.email;
+    if (!identifier || typeof identifier !== "string" || !identifier.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Email or phone number is required",
+      });
+    }
 
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,

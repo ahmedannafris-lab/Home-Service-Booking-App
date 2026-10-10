@@ -422,8 +422,13 @@ export default function App() {
               onBack={handleBack}
               onLoginSuccess={(role) => {
                 setUserRole(role);
-                showToast(`Welcome back, Admin! Logged in as ${role}.`);
-                navigateTo('admin-profile');
+                if (role === 'admin') {
+                  showToast('Welcome back, Admin!');
+                  navigateTo('admin-profile');
+                  return;
+                }
+                showToast(`Welcome back! Logged in as ${role}.`);
+                navigateTo('home');
               }}
               onForgotPassword={() => navigateTo('forgot-password')}
               onSignUp={() => navigateTo('register')}
@@ -435,6 +440,11 @@ export default function App() {
               onBack={handleBack}
               onLoginSuccess={(role) => {
                 setUserRole(role);
+                if (role === 'admin') {
+                  showToast('Welcome back, Admin!');
+                  navigateTo('admin-profile');
+                  return;
+                }
                 showToast(`Welcome back, Ahmed! Logged in as ${role}.`);
                 if (pendingBooking) {
                   void handleConfirmBooking(pendingBooking).catch((error) => {

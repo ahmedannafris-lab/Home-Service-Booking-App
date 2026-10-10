@@ -97,7 +97,7 @@ export const ManageUserScreen: React.FC<ManageUserScreenProps> = ({ userId, onBa
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 p-5 bg-slate-50/80 backdrop-blur-md border-t border-slate-200 space-y-3 z-50">
+      <footer className="sticky bottom-0 left-0 right-0 p-5 bg-slate-50/80 backdrop-blur-md border-t border-slate-200 space-y-3 z-50 mt-auto">
         <button 
           onClick={() => {
             setIsActive(true);

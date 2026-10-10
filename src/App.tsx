@@ -21,6 +21,9 @@ import { MessagesScreen } from './components/screens/MessagesScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
 import { AdminProfileScreen } from './components/screens/AdminProfileScreen';
+import { AdminPortalScreen } from './components/screens/AdminPortalScreen';
+import { ServiceProvidersScreen } from './components/screens/ServiceProvidersScreen';
+import { ProviderVerificationScreen } from './components/screens/ProviderVerificationScreen';
 import { AdminCategoriesScreen } from './components/screens/AdminCategoriesScreen';
 import { AdminCategoryServicesScreen } from './components/screens/AdminCategoryServicesScreen';
 import { AdminServiceFormValues } from './components/screens/AdminCategoryServicesScreen';
@@ -88,6 +91,7 @@ export default function App() {
   const [activeSpecialistModal, setActiveSpecialistModal] = useState<Specialist | null>(null);
   const [activeChatSpecialist, setActiveChatSpecialist] = useState<Specialist | null>(null);
   const [adminSelectedUserId, setAdminSelectedUserId] = useState<string>('');
+  const [adminSelectedProviderId, setAdminSelectedProviderId] = useState<string>('');
 
   // App container framing (Mobile iPhone Frame vs Responsive Full-Width vs Full Screen)
   const [deviceFrame, setDeviceFrame] = useState<'mobile' | 'expanded' | 'full'>('mobile');
@@ -152,20 +156,27 @@ export default function App() {
         case 'admin-bookings':   // 👈 අලුතෙන්
           setCurrentScreen('home');
           break;
-        case 'admin-profile':
+        case 'admin-portal':
           setCurrentScreen('admin-login');
           break;
+        case 'admin-profile':
+          setCurrentScreen('admin-portal');
+          break;
         case 'admin-categories':
-          setCurrentScreen('admin-profile');
+          setCurrentScreen('admin-portal');
           break;
         case 'admin-category-services':
           setCurrentScreen('admin-categories');
           break;
         case 'admin-users':
-          setCurrentScreen('admin-profile');
+        case 'admin-providers':
+          setCurrentScreen('admin-portal');
           break;
         case 'admin-user-detail':
           setCurrentScreen('admin-users');
+          break;
+        case 'admin-provider-detail':
+          setCurrentScreen('admin-providers');
           break;
         default:
           setCurrentScreen('home');
@@ -276,6 +287,9 @@ export default function App() {
               <option value="admin-bookings">15. Admin - All Bookings</option>   {/* 👈 අලුතෙන් */}
               <option value="admin-users">16. Admin - Users</option>
               <option value="admin-user-detail">17. Admin - User Detail</option>
+              <option value="admin-portal">18. Admin - Portal Dashboard</option>
+              <option value="admin-providers">19. Admin - Providers</option>
+              <option value="admin-provider-detail">20. Admin - Provider Detail</option>
             </select>
 
             <button
@@ -432,7 +446,7 @@ export default function App() {
               onLoginSuccess={(role) => {
                 setUserRole(role);
                 showToast(`Welcome back, Admin! Logged in as ${role}.`);
-                navigateTo('admin-profile');
+                navigateTo('admin-portal');
               }}
               onForgotPassword={() => navigateTo('forgot-password')}
               onSignUp={() => navigateTo('register')}
@@ -612,6 +626,14 @@ export default function App() {
             />
           )}
 
+          {currentScreen === 'admin-portal' && (
+            <AdminPortalScreen
+              onBack={handleBack}
+              onNavigate={navigateTo}
+              showToast={showToast}
+            />
+          )}
+
           {currentScreen === 'admin-profile' && (
             <AdminProfileScreen
               onBack={handleBack}
@@ -686,6 +708,24 @@ export default function App() {
           {currentScreen === 'admin-user-detail' && (
             <ManageUserScreen
               userId={adminSelectedUserId}
+              onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'admin-providers' && (
+            <ServiceProvidersScreen
+              onBack={handleBack}
+              onViewProvider={(providerId) => {
+                setAdminSelectedProviderId(providerId);
+                navigateTo('admin-provider-detail');
+              }}
+            />
+          )}
+
+          {currentScreen === 'admin-provider-detail' && (
+            <ProviderVerificationScreen
+              providerId={adminSelectedProviderId}
               onBack={handleBack}
               showToast={showToast}
             />

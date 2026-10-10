@@ -23,7 +23,10 @@ export type ScreenId =
   | 'admin-categories'
   | 'admin-category-services'
   | 'admin-users'
-  | 'admin-user-detail';
+  | 'admin-user-detail'
+  | 'admin-portal'
+  | 'admin-providers'
+  | 'admin-provider-detail';
 
 export type UserRole = 'customer' | 'provider' | 'admin';
 

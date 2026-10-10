@@ -151,4 +151,69 @@ router.post("/payments", auth, async (req, res) => {
   }
 });
 
+// All history operations are scoped to the authenticated owner.
+router.get('/payments', auth, async (req, res) => {
+  try {
+    const payments = await Payment.find({ customerId: req.user._id })
+      .sort({ createdAt: -1 }).populate('bookingId', 'serviceTitle date timeSlot status');
+    res.json({ success: true, payments });
+  } catch {
+    res.status(500).json({ message: 'Unable to load payments' });
+  }
+});
+
+router.get('/payments/:id', auth, async (req, res) => {
+  if (!mongoose.isObjectIdOrHexString(req.params.id)) return res.status(400).json({ message: 'Invalid payment ID' });
+  try {
+    const payment = await Payment.findOne({ _id: req.params.id, customerId: req.user._id })
+      .populate('bookingId', 'serviceTitle date timeSlot status');
+    if (!payment) return res.status(404).json({ message: 'Payment not found' });
+    res.json({ success: true, payment });
+  } catch {
+    res.status(500).json({ message: 'Unable to load payment' });
+  }
+});
+
+router.patch('/payments/:id', auth, async (req, res) => {
+  if (!mongoose.isObjectIdOrHexString(req.params.id)) return res.status(400).json({ message: 'Invalid payment ID' });
+  const { method, cardLastFour, onlineProvider, mobileNumber } = req.body || {};
+  if (!['cash', 'card', 'online'].includes(method)) return res.status(400).json({ message: 'Choose a valid payment method' });
+  if (method === 'card' && (typeof cardLastFour !== 'string' || !/^\d{4}$/.test(cardLastFour))) return res.status(400).json({ message: 'Valid card last four digits required' });
+  if (method === 'online' && !['genie', 'ezcash', 'bank'].includes(onlineProvider)) return res.status(400).json({ message: 'Choose a valid online provider' });
+  if (method === 'online' && onlineProvider !== 'bank' && (typeof mobileNumber !== 'string' || !/^\+947\d{8}$/.test(mobileNumber))) return res.status(400).json({ message: 'Valid Sri Lankan mobile number required' });
+  try {
+    const existing = await Payment.findOne({ _id: req.params.id, customerId: req.user._id });
+    if (!existing) return res.status(404).json({ message: 'Payment not found' });
+    if (existing.status !== 'due' || !existing.demo) return res.status(409).json({ message: 'Only pending demo payments can be edited' });
+    const booking = await Booking.findOne({ _id: existing.bookingId, customerId: req.user._id });
+    if (!booking || booking.status !== 'scheduled') return res.status(409).json({ message: 'Only scheduled bookings can be paid' });
+    const metadata = method === 'card' ? { cardLastFour } : method === 'online' ? { onlineProvider, ...(onlineProvider !== 'bank' ? { mobileLastFour: mobileNumber.slice(-4) } : {}) } : {};
+    const unset = Object.fromEntries(['cardLastFour', 'onlineProvider', 'mobileLastFour'].filter(key => !(key in metadata)).map(key => [key, 1]));
+    const payment = await Payment.findOneAndUpdate(
+      { _id: existing._id, customerId: req.user._id, status: 'due', demo: true },
+      { $set: { method, ...metadata, status: method === 'cash' ? 'due' : 'demo_paid', paidAt: method === 'cash' ? null : new Date() }, $unset: unset },
+      { new: true, runValidators: true }
+    );
+    if (!payment) return res.status(409).json({ message: 'Payment changed. Refresh and retry.' });
+    res.json({ success: true, payment });
+  } catch {
+    res.status(500).json({ message: 'Unable to update payment' });
+  }
+});
+
+router.delete('/payments/:id', auth, async (req, res) => {
+  if (!mongoose.isObjectIdOrHexString(req.params.id)) return res.status(400).json({ message: 'Invalid payment ID' });
+  try {
+    const existing = await Payment.findOne({ _id: req.params.id, customerId: req.user._id });
+    if (!existing) return res.status(404).json({ message: 'Payment not found' });
+    if (existing.status !== 'due' || !existing.demo) return res.status(409).json({ message: 'Only pending demo payments can be deleted' });
+    const payment = await Payment.findOneAndDelete({ _id: existing._id, customerId: req.user._id, status: 'due', demo: true });
+    if (!payment) return res.status(409).json({ message: 'Payment changed. Refresh and retry.' });
+    // Booking has no stored payment reference; removing a due record leaves it unpaid.
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ message: 'Unable to delete payment' });
+  }
+});
+
 module.exports = router;

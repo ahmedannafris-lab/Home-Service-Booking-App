@@ -23,6 +23,7 @@ import { AdminBookingsScreen } from './components/screens/AdminBookingsScreen'; 
 import { MessagesScreen } from './components/screens/MessagesScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
+import { PaymentHistoryScreen } from './components/screens/PaymentHistoryScreen';
 import { AdminProfileScreen } from './components/screens/AdminProfileScreen';
 import { AdminPortalScreen } from './components/screens/AdminPortalScreen';
 import { ServiceProvidersScreen } from './components/screens/ServiceProvidersScreen';
@@ -159,6 +160,9 @@ export default function App() {
         case 'profile':
         case 'admin-bookings':   // 👈 අලුතෙන්
           setCurrentScreen('home');
+          break;
+        case 'payment-history':
+          setCurrentScreen('profile');
           break;
         case 'admin-portal':
           setCurrentScreen('admin-login');
@@ -742,8 +746,10 @@ export default function App() {
             />
           )}
 
+          {currentScreen === 'payment-history' && <PaymentHistoryScreen onBack={handleBack} />}
           {currentScreen === 'profile' && (
             <ProfileScreen
+              onPaymentHistory={() => navigateTo('payment-history')}
               currentRole={userRole}
               onSwitchRole={(newRole) => setUserRole(newRole)}
               onLogout={() => {

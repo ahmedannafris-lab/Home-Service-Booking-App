@@ -23,6 +23,100 @@ require.cache[authPath] = {
 const checkoutRoutes = require('./checkoutRoutes');
 const Payment = mongoose.model('Payment');
 
+test('payment history CRUD is owner-scoped and protects completed records', async (t) => {
+  const app = express();
+  app.use(express.json());
+  app.use('/api', checkoutRoutes);
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const id = String(new mongoose.Types.ObjectId());
+  const original = { _id: id, customerId, bookingId, method: 'cash', status: 'due', demo: true, amountMinor: 350000 };
+  let record = { ...original };
+  let race = false;
+  const owned = query => assert.equal(String(query.customerId), String(customerId));
+  t.mock.method(Payment, 'find', query => {
+    owned(query);
+    return { sort: () => ({ populate: async () => record ? [record] : [] }) };
+  });
+  t.mock.method(Payment, 'findOne', query => {
+    owned(query);
+    const result = Promise.resolve(record);
+    result.populate = async () => record;
+    return result;
+  });
+  t.mock.method(Booking, 'findOne', async query => { owned(query); return { status: 'scheduled' }; });
+  t.mock.method(Payment, 'findOneAndUpdate', async (query, update) => {
+    owned(query); assert.equal(query.status, 'due'); assert.equal(query.demo, true);
+    if (race) return null;
+    record = { ...record, ...update.$set };
+    for (const key of Object.keys(update.$unset)) delete record[key];
+    return record;
+  });
+  t.mock.method(Payment, 'findOneAndDelete', async query => {
+    owned(query); assert.equal(query.status, 'due'); assert.equal(query.demo, true);
+    if (race) return null;
+    const removed = record; record = null; return removed;
+  });
+  async function call(method, suffix = `/${id}`, body, authenticated = true) {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/api/payments${suffix}`, {
+      method, headers: { 'Content-Type': 'application/json', ...(authenticated ? { Authorization: 'Bearer test-token' } : {}) },
+      ...(body && method !== 'GET' ? { body: JSON.stringify(body) } : {}),
+    });
+    return { status: response.status, body: await response.json() };
+  }
+  await t.test('all history endpoints require authentication', async () => {
+    for (const method of ['GET', 'PATCH', 'DELETE']) assert.equal((await call(method, `/${id}`, undefined, false)).status, 401);
+    assert.equal((await call('GET', '', undefined, false)).status, 401);
+  });
+  await t.test('reads the owner list and individual receipt', async () => {
+    assert.equal((await call('GET', '')).body.payments.length, 1);
+    assert.equal((await call('GET')).body.payment._id, id);
+  });
+  await t.test('rejects invalid IDs and missing or unowned payments', async () => {
+    for (const method of ['GET', 'PATCH', 'DELETE']) assert.equal((await call(method, '/invalid')).status, 400);
+    record = null;
+    for (const method of ['GET', 'PATCH', 'DELETE']) assert.equal((await call(method, `/${id}`, { method: 'cash' })).status, 404);
+    record = { ...original };
+  });
+  await t.test('validates update metadata', async () => {
+    for (const body of [{ method: 'invalid' }, { method: 'card' }, { method: 'online', onlineProvider: 'genie', mobileNumber: '123' }]) {
+      assert.equal((await call('PATCH', `/${id}`, body)).status, 400);
+    }
+  });
+  await t.test('converts due cash into demo paid without accepting an amount override', async () => {
+    const result = await call('PATCH', `/${id}`, { method: 'card', cardLastFour: '4242', amountMinor: 1, cvv: '123' });
+    assert.equal(result.status, 200);
+    assert.equal(result.body.payment.status, 'demo_paid');
+    assert.equal(result.body.payment.amountMinor, 350000);
+    assert.equal('cvv' in result.body.payment, false);
+  });
+  await t.test('completed payments cannot be edited or deleted', async () => {
+    assert.equal((await call('PATCH', `/${id}`, { method: 'cash' })).status, 409);
+    assert.equal((await call('DELETE')).status, 409);
+  });
+  await t.test('wallet update stores only masked metadata and preserves the database amount', async () => {
+    record = { ...original, cardLastFour: '4242' };
+    const result = await call('PATCH', `/${id}`, { method: 'online', onlineProvider: 'genie', mobileNumber: '+94771234567' });
+    assert.equal(result.status, 200);
+    assert.equal(result.body.payment.mobileLastFour, '4567');
+    assert.equal(result.body.payment.amountMinor, original.amountMinor);
+    assert.equal('cardLastFour' in result.body.payment, false);
+    assert.equal('mobileNumber' in result.body.payment, false);
+  });
+  await t.test('guards concurrent payment updates and deletions', async () => {
+    record = { ...original }; race = true;
+    assert.equal((await call('PATCH', `/${id}`, { method: 'cash' })).status, 409);
+    assert.equal((await call('DELETE')).status, 409);
+    race = false;
+  });
+  await t.test('deletes a pending record and keeps other payment state untouched', async () => {
+    assert.equal((await call('DELETE')).status, 200);
+    assert.equal(record, null);
+    assert.equal((await call('GET', '')).body.payments.length, 0);
+  });
+});
+
 test('demo checkout HTTP integration', async (t) => {
   const app = express();
   app.use(express.json());

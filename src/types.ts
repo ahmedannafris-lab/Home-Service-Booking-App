@@ -1,6 +1,7 @@
 export type ScreenId =
   | 'splash'
   | 'payment-success'
+  | 'payment-history'
   | 'payment'
   | 'onboarding-1'
   | 'onboarding-2'

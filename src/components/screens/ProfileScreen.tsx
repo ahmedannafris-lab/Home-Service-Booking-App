@@ -4,6 +4,7 @@ import { USER_AVATAR } from '../../data/mockData';
 import { UserRole } from '../../types';
 
 interface ProfileScreenProps {
+  onPaymentHistory: () => void;
   currentRole: UserRole;
   onSwitchRole: (role: UserRole) => void;
   onLogout: () => void;
@@ -13,6 +14,7 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   currentRole,
+  onPaymentHistory,
   onSwitchRole,
   onLogout,
   onBack,
@@ -94,6 +96,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
 
         {/* Menu Items */}
+        <button onClick={onPaymentHistory} className="w-full bg-white rounded-2xl border border-slate-100 px-4 py-4 flex items-center justify-between text-sm font-semibold text-slate-800">
+          <span>Payment History & Receipts</span><span className="text-blue-600">View →</span>
+        </button>
         <div className="bg-white rounded-2xl border border-slate-100 shadow-xs divide-y divide-slate-100 overflow-hidden text-xs">
           <button
             onClick={() => showToast('Saved Address: 14/2 Alfred House Gardens, Colombo 03')}

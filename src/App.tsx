@@ -44,6 +44,16 @@ export default function App() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('plumbing');
   const [selectedService, setSelectedService] = useState<ServiceItem>(SERVICES[0]);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+  const [deletedHistoryIds, setDeletedHistoryIds] = useState<string[]>(() => {
+    try {
+      const storedIds = window.localStorage.getItem('homemate-deleted-history');
+      const parsedIds: unknown = storedIds ? JSON.parse(storedIds) : [];
+      return Array.isArray(parsedIds) && parsedIds.every((id): id is string => typeof id === 'string') ? parsedIds : [];
+    } catch (error) {
+      console.error('Unable to load deleted service history:', error);
+      return [];
+    }
+  });
   const [checkoutBooking, setCheckoutBooking] = useState<Booking>({
     id: 'BK-10234', serviceId: 'deep-home-cleaning', serviceTitle: 'Home Cleaning',
     categoryName: 'Cleaning', date: '12 Aug 2026', timeSlot: '10:00 AM',
@@ -593,7 +603,17 @@ export default function App() {
 
           {currentScreen === 'history' && (
             <HistoryScreen
-              bookings={bookings}
+              bookings={bookings.filter((booking) => !deletedHistoryIds.includes(booking.id))}
+              onDelete={(bookingId) => {
+                const nextDeletedIds = [...new Set([...deletedHistoryIds, bookingId])];
+                try {
+                  window.localStorage.setItem('homemate-deleted-history', JSON.stringify(nextDeletedIds));
+                  setDeletedHistoryIds(nextDeletedIds);
+                  showToast('Service removed from history. The booking was not cancelled.');
+                } catch {
+                  showToast('Unable to delete this history item. Please check your browser storage and try again.');
+                }
+              }}
               onRebook={(b) => {
                 const s = services.find((item) => item.id === b.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(s);
@@ -668,7 +688,6 @@ export default function App() {
           {currentScreen === 'profile' && (
             <ProfileScreen
               currentRole={userRole}
-              onSwitchRole={(newRole) => setUserRole(newRole)}
               onLogout={() => {
                 localStorage.removeItem('homemate_token');
                 localStorage.removeItem('homemate_user');

@@ -3,8 +3,9 @@ import { SplashScreen } from './components/screens/SplashScreen';
 import { PaymentSuccessScreen } from './components/screens/PaymentSuccessScreen';
 import { PaymentScreen, PaymentMethod } from './components/screens/PaymentScreen';
 import { ScreenId, ServiceItem, Specialist, UserRole, Booking } from './types';
-import { SERVICES, CATEGORIES, SPECIALISTS, INITIAL_BOOKINGS } from './data/mockData';
+import { SERVICES, CATEGORIES, SPECIALISTS, INITIAL_BOOKINGS, HERO_FEMALE_PRO, HERO_MALE_TRANSIT } from './data/mockData';
 import { WalkthroughScreen } from './components/screens/WalkthroughScreen';
+import { OnboardingScreen } from './components/screens/OnboardingScreen';
 import { RoleSelectionScreen } from './components/screens/RoleSelectionScreen';
 import { LoginScreen } from './components/screens/LoginScreen';
 import { RegisterScreen } from './components/screens/RegisterScreen';
@@ -18,16 +19,21 @@ import { BookingsScreen } from './components/screens/BookingsScreen';
 import { MessagesScreen } from './components/screens/MessagesScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
+import { AdminProfileScreen } from './components/screens/AdminProfileScreen';
+import { AdminCategoriesScreen } from './components/screens/AdminCategoriesScreen';
+import { AdminCategoryServicesScreen } from './components/screens/AdminCategoryServicesScreen';
+import { AdminServiceFormValues } from './components/screens/AdminCategoryServicesScreen';
 import { SpecialistProfileModal } from './components/screens/SpecialistProfileModal';
 import { BottomNav } from './components/common/BottomNav';
 import { Toast } from './components/common/Toast';
-import { nextNavigationHistory } from './navigation';
+import { nextNavigationHistory, getNextOnboardingScreen, getPreviousOnboardingScreen } from './navigation';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(() => new URLSearchParams(window.location.search).get('screen') === 'payment' ? 'payment' : 'splash');
   useEffect(() => {
     if (currentScreen !== 'splash') return;
-    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'payment-success' : screen), 3000);
+    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
+    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
     return () => window.clearTimeout(timer);
   }, [currentScreen]);
   const [navigationHistory, setNavigationHistory] = useState<ScreenId[]>([]);
@@ -43,6 +49,36 @@ export default function App() {
   });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [paymentCard, setPaymentCard] = useState('1234');
+  const [services, setServices] = useState<ServiceItem[]>(() => {
+    try {
+      const storedServices = window.localStorage.getItem('homemate-services');
+      return storedServices ? JSON.parse(storedServices) as ServiceItem[] : SERVICES;
+    } catch {
+      return SERVICES;
+    }
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem('homemate-services', JSON.stringify(services));
+  }, [services]);
+
+  useEffect(() => {
+    const migrationKey = 'homemate-service-catalog-v2';
+    if (window.localStorage.getItem(migrationKey)) return;
+
+    const newServiceIds = new Set(['interior-wall-painting', 'exterior-weatherproof-painting', 'washing-machine-repair', 'refrigerator-cooling-repair']);
+    setServices((currentServices) => {
+      const existingIds = new Set(currentServices.map((service) => service.id));
+      const missingServices = SERVICES.filter((service) => newServiceIds.has(service.id) && !existingIds.has(service.id));
+      return missingServices.length > 0 ? [...currentServices, ...missingServices] : currentServices;
+    });
+    window.localStorage.setItem(migrationKey, 'complete');
+  }, []);
+  const [paymentId, setPaymentId] = useState('');
+  const [pendingBooking, setPendingBooking] = useState<{
+    serviceId: string; serviceTitle: string; categoryName: string;
+    date: string; timeSlot: string; address: string; price: number; promoCode?: string;
+  } | null>(null);
 
   // Modals & States
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -78,12 +114,19 @@ export default function App() {
     } else {
       // Default natural parent mapping if history is empty
       switch (currentScreen) {
+        case 'onboarding-3':
+          setCurrentScreen('onboarding-2');
+          break;
         case 'onboarding-2':
           setCurrentScreen('onboarding-1');
           break;
-        case 'role-selection':
-          setCurrentScreen('onboarding-1');
+        case 'onboarding-1':
+          setCurrentScreen('home');
           break;
+        case 'role-selection':
+          setCurrentScreen('onboarding-3');
+          break;
+        case 'admin-login':
         case 'login':
           setCurrentScreen('role-selection');
           break;
@@ -106,8 +149,14 @@ export default function App() {
         case 'profile':
           setCurrentScreen('home');
           break;
-        case 'onboarding-1':
-          setCurrentScreen('home');
+        case 'admin-profile':
+          setCurrentScreen('admin-login');
+          break;
+        case 'admin-categories':
+          setCurrentScreen('admin-profile');
+          break;
+        case 'admin-category-services':
+          setCurrentScreen('admin-categories');
           break;
         default:
           setCurrentScreen('home');
@@ -119,7 +168,7 @@ export default function App() {
   const isMainTab = ['home', 'bookings', 'messages', 'history', 'profile', 'categories', 'category-detail'].includes(currentScreen);
 
   // Handler to create a new booking
-  const handleConfirmBooking = (details: {
+  const handleConfirmBooking = async (details: {
     serviceId: string;
     serviceTitle: string;
     categoryName: string;
@@ -127,23 +176,43 @@ export default function App() {
     timeSlot: string;
     address: string;
     price: number;
+    promoCode?: string;
   }) => {
+    const token = localStorage.getItem('homemate_token') || sessionStorage.getItem('homemate_token');
+    if (!token) { setPendingBooking(details); showToast('Sign in to continue with this booking.'); setIsScheduleOpen(false); navigateTo('login'); return; }
+    const response = await fetch('http://localhost:5000/api/bookings', {
+      method: 'POST', headers: {'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+      body: JSON.stringify({serviceId:details.serviceId,date:details.date,timeSlot:details.timeSlot,address:details.address,promoCode:details.promoCode || ''}),
+    });
+    const result = await response.json();
+    if (response.status === 401) {
+      localStorage.removeItem('homemate_token');
+      sessionStorage.removeItem('homemate_token');
+      setPendingBooking(details);
+      setIsScheduleOpen(false);
+      showToast('Your session expired. Sign in to continue with this booking.');
+      navigateTo('login');
+      return;
+    }
+    if (!response.ok) throw new Error(result.message || 'Unable to save booking');
     const specialist = SPECIALISTS[selectedService?.specialistId || 'kamal'] || SPECIALISTS.kamal;
     const newBooking: Booking = {
-      id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: result.booking._id,
       serviceId: details.serviceId,
       serviceTitle: details.serviceTitle,
       categoryName: details.categoryName,
       date: details.date,
       timeSlot: details.timeSlot,
       address: details.address,
-      price: details.price,
+      price: result.booking.amountMinor / 100,
       status: 'scheduled',
       specialist,
-      createdAt: 'Just now',
+      createdAt: result.booking.createdAt,
     };
 
     setCheckoutBooking(newBooking);
+    setPendingBooking(null);
+    setPaymentId('');
     setIsScheduleOpen(false);
     navigateTo('payment');
   };
@@ -182,7 +251,8 @@ export default function App() {
               <option value="payment">Payment</option>
               <option value="onboarding-1">1. Walkthrough - Confident Booking</option>
               <option value="onboarding-2">2. Walkthrough - Live GPS & Support</option>
-              <option value="role-selection">3. Role Selection</option>
+              <option value="onboarding-3">3. Walkthrough - Ready to Book</option>
+              <option value="role-selection">4. Role Selection</option>
               <option value="login">4. Welcome Back Login</option>
               <option value="register">5. Create Account</option>
               <option value="forgot-password">6. Reset Password</option>
@@ -242,14 +312,23 @@ export default function App() {
           {currentScreen === 'payment' && (
             <PaymentScreen
               booking={checkoutBooking}
-              service={SERVICES.find((service) => service.id === checkoutBooking.serviceId) || SERVICES[0]}
+              service={services.find((service) => service.id === checkoutBooking.serviceId) || services[0] || SERVICES[0]}
               onBack={() => navigateTo('home')}
               onHelp={() => { setActiveChatSpecialist(checkoutBooking.specialist); navigateTo('messages'); }}
               onEdit={() => {
-                const service = SERVICES.find((item) => item.id === checkoutBooking.serviceId) || SERVICES[0];
+                const service = services.find((item) => item.id === checkoutBooking.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(service); setServiceToSchedule(service); setIsScheduleOpen(true);
               }}
-              onPay={(method, card) => {
+              onPay={async (method, card) => {
+                const token = localStorage.getItem('homemate_token') || sessionStorage.getItem('homemate_token');
+                if (!token) throw new Error('Please log in before payment.');
+                const response = await fetch('http://localhost:5000/api/payments', {
+                  method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+                  body:JSON.stringify({bookingId:checkoutBooking.id,method}),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Unable to save payment');
+                setPaymentId(result.payment._id);
                 setPaymentMethod(method); setPaymentCard(card);
                 setBookings((previous) => [checkoutBooking, ...previous.filter((booking) => booking.id !== checkoutBooking.id)]);
                 navigateTo('payment-success');
@@ -261,6 +340,7 @@ export default function App() {
               booking={checkoutBooking}
               method={paymentMethod}
               card={paymentCard}
+              paymentId={paymentId}
               onViewBooking={() => {
                 setBookings((previous) => previous.some((booking) => booking.id === checkoutBooking.id) ? previous : [checkoutBooking, ...previous]);
                 navigateTo('bookings');
@@ -270,19 +350,52 @@ export default function App() {
           )}
 
           {currentScreen === 'onboarding-1' && (
-            <WalkthroughScreen
-              onGetStarted={() => navigateTo('role-selection')}
-              onSignIn={() => navigateTo('login')}
+            <OnboardingScreen
+              pageNumber={1}
+              totalPages={3}
+              title="Book trusted help in minutes"
+              subtitle="Find vetted specialists for cleaning, plumbing, electrical work, and more — all with transparent pricing and same-day support."
+              image={HERO_FEMALE_PRO}
+              badge="1 of 3"
+              accentLabel="Trusted Experts"
+              features={['Verified professionals with real ratings', 'Clear upfront pricing before you book', 'Same-day help when your home needs it now']}
+              onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
               onSkip={() => navigateTo('home')}
+              onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
           )}
 
           {currentScreen === 'onboarding-2' && (
-            <WalkthroughScreen
-              onGetStarted={() => navigateTo('home')}
-              onSignIn={() => navigateTo('login')}
+            <OnboardingScreen
+              pageNumber={2}
+              totalPages={3}
+              title="Track your arrival in real time"
+              subtitle="See your specialist on the map, receive ETA updates, and stay informed as they head to your home."
+              image={HERO_MALE_TRANSIT}
+              badge="2 of 3"
+              accentLabel="Live Tracking"
+              features={['GPS arrival updates from your technician', 'Instant schedule changes and accurate ETAs', 'Clear communication before the job starts']}
+              onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
               onSkip={() => navigateTo('home')}
+              onSignIn={() => navigateTo('login')}
+              onBack={handleBack}
+            />
+          )}
+
+          {currentScreen === 'onboarding-3' && (
+            <OnboardingScreen
+              pageNumber={3}
+              totalPages={3}
+              title="Ready when your home needs it"
+              subtitle="From emergency fixes to planned upgrades, manage appointments, chat with experts, and pay securely after the work is done."
+              image={HERO_FEMALE_PRO}
+              badge="3 of 3"
+              accentLabel="Simple & Secure"
+              features={['Secure payment after work is completed', 'Direct chat with your assigned specialist', 'Manage bookings and service updates in one place']}
+              onNext={() => navigateTo('role-selection')}
+              onSkip={() => navigateTo('home')}
+              onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
           )}
@@ -292,11 +405,25 @@ export default function App() {
               onBack={handleBack}
               onContinue={(role) => {
                 setUserRole(role);
-                navigateTo('register');
+                navigateTo(role === 'admin' ? 'admin-login' : 'login');
               }}
               onPartnerClick={() => {
                 showToast('Opening HomeMate Enterprise Partnership program...');
               }}
+            />
+          )}
+
+          {currentScreen === 'admin-login' && (
+            <LoginScreen
+              defaultRole="admin"
+              onBack={handleBack}
+              onLoginSuccess={(role) => {
+                setUserRole(role);
+                showToast(`Welcome back, Admin! Logged in as ${role}.`);
+                navigateTo('admin-profile');
+              }}
+              onForgotPassword={() => navigateTo('forgot-password')}
+              onSignUp={() => navigateTo('register')}
             />
           )}
 
@@ -306,6 +433,13 @@ export default function App() {
               onLoginSuccess={(role) => {
                 setUserRole(role);
                 showToast(`Welcome back, Ahmed! Logged in as ${role}.`);
+                if (pendingBooking) {
+                  void handleConfirmBooking(pendingBooking).catch((error) => {
+                    showToast(error instanceof Error ? error.message : 'Unable to save booking');
+                    navigateTo('home');
+                  });
+                  return;
+                }
                 navigateTo('home');
               }}
               onForgotPassword={() => navigateTo('forgot-password')}
@@ -337,6 +471,7 @@ export default function App() {
 
           {currentScreen === 'home' && (
             <HomeScreen
+              services={services}
               onSelectCategory={(catId) => {
                 setSelectedCategoryId(catId);
                 navigateTo('category-detail');
@@ -345,11 +480,6 @@ export default function App() {
               onSelectService={(serv) => {
                 setSelectedService(serv);
                 navigateTo('service-detail');
-              }}
-              onQuickBook={(serv) => {
-                setSelectedService(serv);
-                setServiceToSchedule(serv);
-                setIsScheduleOpen(true);
               }}
               onUrgentHelp={() => {
                 setSelectedCategoryId('plumbing');
@@ -366,6 +496,7 @@ export default function App() {
 
           {currentScreen === 'categories' && (
             <CategoryListScreen
+              services={services}
               onBack={handleBack}
               onSelectCategory={(catId) => {
                 setSelectedCategoryId(catId);
@@ -380,6 +511,7 @@ export default function App() {
           {currentScreen === 'category-detail' && (
             <CategoryDetailScreen
               categoryId={selectedCategoryId}
+              services={services}
               onBack={handleBack}
               onSelectService={(serv) => {
                 setSelectedService(serv);
@@ -428,7 +560,7 @@ export default function App() {
                 showToast(`Booking ${id} cancelled. 100% refund initiated.`);
               }}
               onRebook={(booking) => {
-                const foundService = SERVICES.find((s) => s.id === booking.serviceId) || SERVICES[0];
+                const foundService = services.find((s) => s.id === booking.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(foundService);
                 setServiceToSchedule(foundService);
                 setIsScheduleOpen(true);
@@ -450,7 +582,7 @@ export default function App() {
             <HistoryScreen
               bookings={bookings}
               onRebook={(b) => {
-                const s = SERVICES.find((item) => item.id === b.serviceId) || SERVICES[0];
+                const s = services.find((item) => item.id === b.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(s);
                 setServiceToSchedule(s);
                 setIsScheduleOpen(true);
@@ -460,11 +592,75 @@ export default function App() {
             />
           )}
 
+          {currentScreen === 'admin-profile' && (
+            <AdminProfileScreen
+              onBack={handleBack}
+              onManageCategories={() => navigateTo('admin-categories')}
+              onLogout={() => {
+                showToast('Signed out successfully.');
+                navigateTo('admin-login');
+              }}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'admin-categories' && (
+            <AdminCategoriesScreen
+              onBack={handleBack}
+              onSelectCategory={(categoryId) => {
+                setSelectedCategoryId(categoryId);
+                navigateTo('admin-category-services');
+              }}
+            />
+          )}
+
+          {currentScreen === 'admin-category-services' && (
+            <AdminCategoryServicesScreen
+              categoryId={selectedCategoryId}
+              services={services}
+              onBack={handleBack}
+              onCreateService={(values: AdminServiceFormValues) => {
+                const category = CATEGORIES.find((item) => item.id === selectedCategoryId) || CATEGORIES[0];
+                const newService: ServiceItem = {
+                  id: `admin-service-${Date.now()}`,
+                  categoryId: category.id,
+                  categoryName: category.name,
+                  title: values.title,
+                  description: values.description,
+                  price: values.price,
+                  rating: 0,
+                  reviewCount: 0,
+                  duration: values.duration,
+                  features: [],
+                  image: category.heroImage,
+                  specialistId: category.specialistId,
+                };
+                setServices((currentServices) => [...currentServices, newService]);
+                showToast(`${newService.title} created successfully.`);
+              }}
+              onUpdateService={(serviceId, values) => {
+                setServices((currentServices) => currentServices.map((service) =>
+                  service.id === serviceId ? { ...service, ...values, originalPrice: undefined } : service
+                ));
+                showToast('Service updated successfully.');
+              }}
+              onDeleteService={(serviceId) => {
+                const removedService = services.find((service) => service.id === serviceId);
+                setServices((currentServices) => currentServices.filter((service) => service.id !== serviceId));
+                if (removedService) showToast(`${removedService.title} deleted.`);
+              }}
+            />
+          )}
+
           {currentScreen === 'profile' && (
             <ProfileScreen
               currentRole={userRole}
               onSwitchRole={(newRole) => setUserRole(newRole)}
               onLogout={() => {
+                localStorage.removeItem('homemate_token');
+                localStorage.removeItem('homemate_user');
+                sessionStorage.removeItem('homemate_token');
+                sessionStorage.removeItem('homemate_user');
                 showToast('Signed out successfully.');
                 navigateTo('login');
               }}

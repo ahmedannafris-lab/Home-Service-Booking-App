@@ -12,7 +12,7 @@
 .splash-screen > div:first-child { padding-top: 18px; }
 .splash-brand {
   position: absolute;
-  top: 37%;
+  top: 30%;
   left: 0;
   width: 100%;
   display: flex;
@@ -20,24 +20,14 @@
   align-items: center;
   text-align: center;
 }
-.splash-logo {
-  width: 76px;
-  height: 76px;
-  display: grid;
-  place-items: center;
-  border-radius: 23px;
-  background: linear-gradient(145deg, #3982ff, #2454e9);
-  border: 1px solid #6498ff;
-  box-shadow: 0 12px 22px -8px #3979ef66, 0 0 0 7px #ffffff80;
-}
-.splash-brand h1 {
-  margin: 32px 0 7px;
-  font-size: 28px;
-  line-height: 1.2;
-  font-weight: 750;
-  letter-spacing: -1px;
+.splash-image {
+  display: block;
+  width: min(78vw, 320px);
+  height: auto;
+  object-fit: contain;
 }
 .splash-brand p {
+  margin-top: -18px;
   color: #85909c;
   font-size: 14px;
   line-height: 1.6;

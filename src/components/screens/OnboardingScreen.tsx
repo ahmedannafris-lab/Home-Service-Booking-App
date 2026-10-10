@@ -1,6 +1,5 @@
 import React from 'react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
-import { LOGO_URL } from '../../data/mockData';
 
 interface OnboardingScreenProps {
   pageNumber: number;

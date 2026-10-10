@@ -54,6 +54,7 @@ export interface ServiceCategory {
   id: string;
   name: string;
   icon: string;
+  cardImage: string;
   specCount: number;
   bgClass: string;
   iconBgClass: string;

@@ -21,7 +21,9 @@ export type ScreenId =
   | 'admin-bookings'
   | 'admin-profile'
   | 'admin-categories'
-  | 'admin-category-services';
+  | 'admin-category-services'
+  | 'admin-users'
+  | 'admin-user-detail';
 
 export type UserRole = 'customer' | 'provider' | 'admin';
 

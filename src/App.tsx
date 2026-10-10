@@ -24,6 +24,8 @@ import { AdminProfileScreen } from './components/screens/AdminProfileScreen';
 import { AdminCategoriesScreen } from './components/screens/AdminCategoriesScreen';
 import { AdminCategoryServicesScreen } from './components/screens/AdminCategoryServicesScreen';
 import { AdminServiceFormValues } from './components/screens/AdminCategoryServicesScreen';
+import { UserManagementScreen } from './components/screens/UserManagementScreen';
+import { ManageUserScreen } from './components/screens/ManageUserScreen';
 import { SpecialistProfileModal } from './components/screens/SpecialistProfileModal';
 import { BottomNav } from './components/common/BottomNav';
 import { Toast } from './components/common/Toast';
@@ -85,6 +87,7 @@ export default function App() {
   const [serviceToSchedule, setServiceToSchedule] = useState<ServiceItem | null>(null);
   const [activeSpecialistModal, setActiveSpecialistModal] = useState<Specialist | null>(null);
   const [activeChatSpecialist, setActiveChatSpecialist] = useState<Specialist | null>(null);
+  const [adminSelectedUserId, setAdminSelectedUserId] = useState<string>('');
 
   // App container framing (Mobile iPhone Frame vs Responsive Full-Width vs Full Screen)
   const [deviceFrame, setDeviceFrame] = useState<'mobile' | 'expanded' | 'full'>('mobile');
@@ -157,6 +160,12 @@ export default function App() {
           break;
         case 'admin-category-services':
           setCurrentScreen('admin-categories');
+          break;
+        case 'admin-users':
+          setCurrentScreen('admin-profile');
+          break;
+        case 'admin-user-detail':
+          setCurrentScreen('admin-users');
           break;
         default:
           setCurrentScreen('home');
@@ -265,6 +274,8 @@ export default function App() {
               <option value="history">13. Service History</option>
               <option value="profile">14. Account Profile</option>
               <option value="admin-bookings">15. Admin - All Bookings</option>   {/* 👈 අලුතෙන් */}
+              <option value="admin-users">16. Admin - Users</option>
+              <option value="admin-user-detail">17. Admin - User Detail</option>
             </select>
 
             <button
@@ -605,6 +616,7 @@ export default function App() {
             <AdminProfileScreen
               onBack={handleBack}
               onManageCategories={() => navigateTo('admin-categories')}
+              onManageUsers={() => navigateTo('admin-users')}
               onLogout={() => {
                 showToast('Signed out successfully.');
                 navigateTo('admin-login');
@@ -658,6 +670,24 @@ export default function App() {
                 setServices((currentServices) => currentServices.filter((service) => service.id !== serviceId));
                 if (removedService) showToast(`${removedService.title} deleted.`);
               }}
+            />
+          )}
+
+          {currentScreen === 'admin-users' && (
+            <UserManagementScreen
+              onBack={handleBack}
+              onViewUser={(userId) => {
+                setAdminSelectedUserId(userId);
+                navigateTo('admin-user-detail');
+              }}
+            />
+          )}
+
+          {currentScreen === 'admin-user-detail' && (
+            <ManageUserScreen
+              userId={adminSelectedUserId}
+              onBack={handleBack}
+              showToast={showToast}
             />
           )}
 

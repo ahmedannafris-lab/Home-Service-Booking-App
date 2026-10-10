@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
@@ -29,6 +30,12 @@ const specialists = [
   { id: "sunil", name: "Sunil Perera", title: "Master HVAC Specialist", experience: "9 yrs exp", rating: 4.95, reviewsCount: 420, jobsCompleted: 1420, distance: "1.8 km", eta: "~30 min", verified: true, status: "Available Today", categoryId: "appliance", bio: "EPA certified air conditioning master tech." },
 ];
 
+const users = [
+  { fullName: "Kamal Perera", email: "kamal.p@example.com", phone: "0712347683", role: "customer", status: "active", avatarUrl: "https://i.pravatar.cc/150?u=1", termsAcceptedAt: new Date() },
+  { fullName: "Nimal Ranasinghe", email: "nimal@example.com", phone: "0771234567", role: "customer", status: "active", avatarUrl: "https://i.pravatar.cc/150?u=2", termsAcceptedAt: new Date() },
+  { fullName: "Sarah Silva", email: "sarah@example.com", phone: "0787654321", role: "customer", status: "inactive", avatarUrl: "https://i.pravatar.cc/150?u=3", termsAcceptedAt: new Date() },
+];
+
 async function seed() {
   try {
     await connectDB();
@@ -38,6 +45,7 @@ async function seed() {
     await Service.deleteMany();
     await Specialist.deleteMany();
     await PromoCode.deleteMany();
+    await User.deleteMany();
 
     console.log("Inserting categories...");
     await ServiceCategory.insertMany(categories);
@@ -55,6 +63,12 @@ async function seed() {
       active: true,
       expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
     });
+
+    console.log("Inserting users...");
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash("password123", salt);
+    const usersWithPassword = users.map(u => ({ ...u, passwordHash }));
+    await User.insertMany(usersWithPassword);
 
     console.log("✅ Seed complete!");
     process.exit(0);

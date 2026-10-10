@@ -29,6 +29,23 @@ const userSchema = new mongoose.Schema(
       enum: ["customer", "provider", "admin"],
       default: "customer",
     },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
+    city: {
+      type: String,
+      default: "",
+    },
+    address: {
+      type: String,
+      default: "",
+    },
+    avatarUrl: {
+      type: String,
+      default: "",
+    },
     termsAcceptedAt: {
       type: Date,
       required: true,

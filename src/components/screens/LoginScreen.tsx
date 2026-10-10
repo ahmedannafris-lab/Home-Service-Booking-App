@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
-import { LOGO_URL } from '../../data/mockData';
+import { BrandLogo } from '../common/BrandLogo';
 import { UserRole } from '../../types';
 
 interface LoginScreenProps {
@@ -19,23 +19,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   defaultRole = 'customer',
 }) => {
   const [role, setRole] = useState<UserRole>(defaultRole);
-  const [identifier, setIdentifier] = useState('name@example.com');
-  const [password, setPassword] = useState('password123');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
   const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    setServerError('');
     const trimmedIdentifier = identifier.trim();
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmedIdentifier);
-    const phoneDigits = trimmedIdentifier.replace(/\D/g, '');
-    const isPhone = /^[+\d\s().-]+$/.test(trimmedIdentifier) && phoneDigits.length >= 7 && phoneDigits.length <= 15;
     const nextErrors: { identifier?: string; password?: string } = {};
 
-    if (!isEmail && !isPhone) {
-      nextErrors.identifier = 'Enter a valid email address or phone number.';
+    if (!isEmail) {
+      nextErrors.identifier = 'Enter your registered email address.';
     }
     if (password.length < 8) {
       nextErrors.password = 'Password must be at least 8 characters.';
@@ -45,18 +46,33 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     if (Object.keys(nextErrors).length > 0) return;
 
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmedIdentifier, password, role }),
+        signal: AbortSignal.timeout(15000),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Unable to log in.');
+      if (!result.success || !result.token || result.user?.role !== role) throw new Error('Login was not confirmed for the selected role.');
+      for (const storage of [localStorage, sessionStorage]) {
+        storage.removeItem('homemate_token');
+        storage.removeItem('homemate_user');
+      }
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('homemate_token', result.token);
+      storage.setItem('homemate_user', JSON.stringify(result.user));
+      onLoginSuccess(result.user.role);
+    } catch (cause) {
+      setServerError(cause instanceof TypeError || (cause instanceof Error && cause.name === 'TimeoutError') ? 'Cannot reach the server. Check that the backend is running.' : cause instanceof Error ? cause.message : 'Unable to log in.');
+    } finally {
       setLoading(false);
-      onLoginSuccess(role);
-    }, 500);
+    }
   };
 
   const handleFaceId = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onLoginSuccess(role);
-    }, 600);
+    setServerError('Face ID is not configured. Please log in with your email and password.');
   };
 
   return (
@@ -81,9 +97,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       <div className="flex-1 px-6 pb-6 pt-1 flex flex-col justify-start overflow-y-auto overflow-x-hidden no-scrollbar">
         {/* Brand & Greeting */}
         <div className="flex flex-col items-center text-center mt-1 mb-5">
-          <div className="w-14 h-14 mb-3.5 rounded-2xl p-1 bg-white shadow-lg shadow-blue-500/20 flex items-center justify-center">
-            <img alt="HomeMate Brand Logo" className="w-12 h-12 object-contain" src={LOGO_URL} />
-          </div>
+          <BrandLogo className="mb-4 w-28" />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 leading-tight">Welcome Back</h1>
           <p className="text-xs text-slate-500 mt-1 max-w-[240px]">Log in to manage your bookings and services</p>
         </div>
@@ -94,7 +108,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <button
               key={r}
               type="button"
-              onClick={() => setRole(r)}
+              disabled={loading}
+              onClick={() => { setRole(r); setServerError(''); }}
               className={`flex-1 py-2 text-center rounded-lg capitalize transition-all cursor-pointer ${
                 role === r
                   ? 'bg-blue-600 text-white font-semibold shadow-sm'
@@ -108,9 +123,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
         {/* Auth Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {serverError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-xs leading-5 text-rose-700">{serverError}</p>}
           {/* Email or Phone */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700">Email or Phone Number</label>
+            <label className="block text-xs font-semibold text-slate-700">Email Address</label>
             <div className={`relative rounded-xl border bg-slate-50/50 focus-within:bg-white focus-within:ring-2 transition-all ${errors.identifier ? 'border-rose-500 focus-within:border-rose-500 focus-within:ring-rose-100' : 'border-slate-200 focus-within:border-blue-600 focus-within:ring-blue-100'}`}>
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <span className="material-symbols-outlined text-[18px]">alternate_email</span>
@@ -224,7 +240,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <div className="grid grid-cols-2 gap-3 mt-4">
               <button
                 type="button"
-                onClick={() => onLoginSuccess(role)}
+                onClick={() => setServerError('Google login is not configured. Please use email and password.')}
                 className="flex items-center justify-center space-x-2 py-2.5 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition active:scale-95 bg-white shadow-xs cursor-pointer"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -238,7 +254,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
               <button
                 type="button"
-                onClick={() => onLoginSuccess(role)}
+                onClick={() => setServerError('Apple login is not configured. Please use email and password.')}
                 className="flex items-center justify-center space-x-2 py-2.5 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition active:scale-95 bg-white shadow-xs cursor-pointer"
               >
                 <svg className="w-4 h-4 fill-slate-900" viewBox="0 0 170 170">

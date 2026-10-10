@@ -35,12 +35,36 @@ export const BookingScheduleModal: React.FC<BookingScheduleModalProps> = ({
 
   if (!isOpen || !service) return null;
 
-  const days = [
-    { label: 'Today', date: '27 Sep' },
-    { label: 'Tomorrow', date: '28 Sep' },
-    { label: 'Mon', date: '29 Sep' },
-    { label: 'Tue', date: '30 Sep' },
-  ];
+  // Generate next 4 days dynamically (Real dates)
+  const getNext4Days = () => {
+    const daysList = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 4; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      
+      let label = '';
+      if (i === 0) {
+        label = 'Today';
+      } else if (i === 1) {
+        label = 'Tomorrow';
+      } else {
+        label = date.toLocaleDateString('en-US', { weekday: 'short' });
+      }
+      
+      const dateStr = date.toLocaleDateString('en-GB', { 
+        day: 'numeric', 
+        month: 'short' 
+      });
+      
+      daysList.push({ label, date: dateStr });
+    }
+    
+    return daysList;
+  };
+
+  const days = getNext4Days();
 
   const timeSlots = [
     '9:00 AM - 11:00 AM',

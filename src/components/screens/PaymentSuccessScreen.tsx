@@ -2,18 +2,20 @@ import { Check, ChevronLeft, Mail, Sparkles } from 'lucide-react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
 import { Booking } from '../../types';
 import type { PaymentMethod } from './PaymentScreen';
+import type { OnlineProvider } from './OnlinePaymentScreen';
 
 interface Props {
   booking: Booking;
   method: PaymentMethod;
   card: string;
   paymentId?: string;
+  onlineProvider?: OnlineProvider;
   onViewBooking: () => void;
   onBackToHome: () => void;
 }
 
-export function PaymentSuccessScreen({ booking, method, card, paymentId, onViewBooking, onBackToHome }: Props) {
-  const title = !paymentId ? 'No Payment Recorded' : method === 'cash' ? 'Booking Confirmed' : 'Demo Payment Successful';
+export function PaymentSuccessScreen({ booking, method, card, paymentId, onlineProvider, onViewBooking, onBackToHome }: Props) {
+  const title = !paymentId ? 'No Payment Recorded' : method === 'cash' ? 'Booking Confirmed' : 'Payment Successful';
   return (
     <section className="payment-success-screen flex flex-1 min-h-0 flex-col bg-[#f6f8fa] text-[#183553]">
       <IOSStatusBar showIsland={false} />
@@ -34,11 +36,12 @@ export function PaymentSuccessScreen({ booking, method, card, paymentId, onViewB
             ['Service', <span className="flex items-center gap-1.5"><Sparkles size={14} className="text-blue-500" />{booking.serviceTitle}</span>],
             ['Date', booking.date],
             ['Time', booking.timeSlot],
+            ...(method === 'online' && onlineProvider ? [['Online Provider', {genie: 'Genie', ezcash: 'eZ Cash', bank: 'Bank Transfer'}[onlineProvider]]] : []),
             ['Amount', <strong className="text-[13px]">LKR {booking.price.toLocaleString('en-US')}</strong>],
             ['Payment Method', method === 'card' ? <span className="flex items-center gap-1.5"><span className="rounded border border-blue-100 bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold italic text-blue-700">VISA</span>•••• {card}</span> : method === 'online' ? 'Online Payment' : 'Cash on Service'],
           ].map(([label, value]) => (
             <div key={String(label)} className="flex min-h-9 items-center justify-between gap-3 border-b border-slate-100 last:border-0">
-              <dt className="text-[#7c8eaa]">{label}</dt><dd className="text-right">{value}</dd>
+              <dt className="shrink-0 text-[#7c8eaa]">{label}</dt><dd className="min-w-0 break-words text-right">{value}</dd>
             </div>
           ))}
         </dl>

@@ -5,7 +5,7 @@ const bookingSchema = new mongoose.Schema(
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: function () { return this.amountMinor != null; },
       index: true,
     },
     serviceId: {
@@ -31,7 +31,7 @@ const bookingSchema = new mongoose.Schema(
     },
     amountMinor: {
       type: Number,
-      required: true,
+      required: function () { return this.customerId != null; },
       min: 0,
       validate: Number.isSafeInteger,
     },
@@ -40,6 +40,16 @@ const bookingSchema = new mongoose.Schema(
       enum: ["LKR"],
       default: "LKR",
     },
+    categoryName: { type: String },
+    price: { type: Number, min: 0 },
+    discount: { type: Number, min: 0, default: 0 },
+    finalPrice: { type: Number, min: 0 },
+    specialist: {
+      name: String,
+      title: String,
+      avatar: String,
+    },
+    specialistId: { type: mongoose.Schema.Types.ObjectId, ref: "Specialist", default: null },
     status: {
       type: String,
       enum: [

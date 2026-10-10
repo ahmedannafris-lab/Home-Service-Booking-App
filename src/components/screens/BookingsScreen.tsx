@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
 import { Booking, Specialist } from '../../types';
+import { BookingDetailsModal } from './BookingDetailsModal';
 
 interface BookingsScreenProps {
   bookings: Booking[];
@@ -20,6 +21,7 @@ export const BookingsScreen: React.FC<BookingsScreenProps> = ({
   showToast,
 }) => {
   const [tab, setTab] = useState<'active' | 'completed'>('active');
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const activeBookings = bookings.filter((b) => b.status === 'transit' || b.status === 'scheduled' || b.status === 'in_progress');
   const completedBookings = bookings.filter((b) => b.status === 'completed');
@@ -93,7 +95,7 @@ export const BookingsScreen: React.FC<BookingsScreenProps> = ({
                 {/* Status Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono font-bold text-slate-400">{booking.id}</span>
+                    <span className="text-[11px] font-mono font-bold text-slate-400">{booking.id.slice(-8)}</span>
                     <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                     <span className="text-xs font-bold text-slate-800">{booking.categoryName}</span>
                   </div>
@@ -194,7 +196,7 @@ export const BookingsScreen: React.FC<BookingsScreenProps> = ({
                       Cancel
                     </button>
                     <button
-                      onClick={() => showToast(`Booking ${booking.id} receipt details sent to your email.`)}
+                      onClick={() => setSelectedBooking(booking)}
                       className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg font-semibold cursor-pointer"
                     >
                       Details
@@ -213,7 +215,7 @@ export const BookingsScreen: React.FC<BookingsScreenProps> = ({
           completedBookings.map((booking) => (
             <div key={booking.id} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs flex flex-col gap-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-mono text-slate-400 font-bold">{booking.id}</span>
+                <span className="font-mono text-slate-400 font-bold">{booking.id.slice(-8)}</span>
                 <span className="text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
                   <span className="material-symbols-outlined text-[13px]">check_circle</span>
                   Completed
@@ -247,6 +249,14 @@ export const BookingsScreen: React.FC<BookingsScreenProps> = ({
           ))
         )}
       </div>
+
+      {/* Booking Details Modal */}
+      <BookingDetailsModal
+        booking={selectedBooking}
+        isOpen={Boolean(selectedBooking)}
+        onClose={() => setSelectedBooking(null)}
+        showToast={showToast}
+      />
     </div>
   );
 };

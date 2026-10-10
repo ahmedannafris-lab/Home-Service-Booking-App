@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react';
 import { SplashScreen } from './components/screens/SplashScreen';
 import { PaymentSuccessScreen } from './components/screens/PaymentSuccessScreen';
 import { PaymentScreen, PaymentMethod } from './components/screens/PaymentScreen';
+import type { OnlineProvider } from './components/screens/OnlinePaymentScreen';
 import { ScreenId, ServiceItem, Specialist, UserRole, Booking } from './types';
 import { SERVICES, CATEGORIES, SPECIALISTS, INITIAL_BOOKINGS, HERO_FEMALE_PRO, HERO_MALE_TRANSIT } from './data/mockData';
 import { WalkthroughScreen } from './components/screens/WalkthroughScreen';
 import { OnboardingScreen } from './components/screens/OnboardingScreen';
+import { FindProOnboardingScreen } from './components/screens/FindProOnboardingScreen';
+import { VerifiedProOnboardingScreen } from './components/screens/VerifiedProOnboardingScreen';
 import { RoleSelectionScreen } from './components/screens/RoleSelectionScreen';
 import { LoginScreen } from './components/screens/LoginScreen';
 import { RegisterScreen } from './components/screens/RegisterScreen';
@@ -16,13 +19,20 @@ import { CategoryDetailScreen } from './components/screens/CategoryDetailScreen'
 import { ServiceDetailScreen } from './components/screens/ServiceDetailScreen';
 import { BookingScheduleModal } from './components/screens/BookingScheduleModal';
 import { BookingsScreen } from './components/screens/BookingsScreen';
+import { AdminBookingsScreen } from './components/screens/AdminBookingsScreen';  // 👈 අලුතෙන්
 import { MessagesScreen } from './components/screens/MessagesScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
+import { PaymentHistoryScreen } from './components/screens/PaymentHistoryScreen';
 import { AdminProfileScreen } from './components/screens/AdminProfileScreen';
+import { AdminPortalScreen } from './components/screens/AdminPortalScreen';
+import { ServiceProvidersScreen } from './components/screens/ServiceProvidersScreen';
+import { ProviderVerificationScreen } from './components/screens/ProviderVerificationScreen';
 import { AdminCategoriesScreen } from './components/screens/AdminCategoriesScreen';
 import { AdminCategoryServicesScreen } from './components/screens/AdminCategoryServicesScreen';
 import { AdminServiceFormValues } from './components/screens/AdminCategoryServicesScreen';
+import { UserManagementScreen } from './components/screens/UserManagementScreen';
+import { ManageUserScreen } from './components/screens/ManageUserScreen';
 import { SpecialistProfileModal } from './components/screens/SpecialistProfileModal';
 import { BottomNav } from './components/common/BottomNav';
 import { Toast } from './components/common/Toast';
@@ -52,6 +62,7 @@ export default function App() {
   });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [paymentCard, setPaymentCard] = useState('1234');
+  const [onlineProvider, setOnlineProvider] = useState<OnlineProvider | undefined>();
   const [services, setServices] = useState<ServiceItem[]>(() => {
     try {
       const storedServices = window.localStorage.getItem('homemate-services');
@@ -88,6 +99,8 @@ export default function App() {
   const [serviceToSchedule, setServiceToSchedule] = useState<ServiceItem | null>(null);
   const [activeSpecialistModal, setActiveSpecialistModal] = useState<Specialist | null>(null);
   const [activeChatSpecialist, setActiveChatSpecialist] = useState<Specialist | null>(null);
+  const [adminSelectedUserId, setAdminSelectedUserId] = useState<string>('');
+  const [adminSelectedProviderId, setAdminSelectedProviderId] = useState<string>('');
 
   // App container framing (Mobile iPhone Frame vs Responsive Full-Width vs Full Screen)
   const [deviceFrame, setDeviceFrame] = useState<'mobile' | 'expanded' | 'full'>('mobile');
@@ -115,7 +128,6 @@ export default function App() {
       setNavigationHistory((prev) => prev.slice(0, -1));
       setCurrentScreen(prevScreen);
     } else {
-      // Default natural parent mapping if history is empty
       switch (currentScreen) {
         case 'onboarding-3':
           setCurrentScreen('onboarding-2');
@@ -150,16 +162,33 @@ export default function App() {
         case 'messages':
         case 'history':
         case 'profile':
+        case 'admin-bookings':   // 👈 අලුතෙන්
           setCurrentScreen('home');
           break;
-        case 'admin-profile':
+        case 'payment-history':
+          setCurrentScreen('profile');
+          break;
+        case 'admin-portal':
           setCurrentScreen('admin-login');
           break;
+        case 'admin-profile':
+          setCurrentScreen('admin-portal');
+          break;
         case 'admin-categories':
-          setCurrentScreen('admin-profile');
+          setCurrentScreen('admin-portal');
           break;
         case 'admin-category-services':
           setCurrentScreen('admin-categories');
+          break;
+        case 'admin-users':
+        case 'admin-providers':
+          setCurrentScreen('admin-portal');
+          break;
+        case 'admin-user-detail':
+          setCurrentScreen('admin-users');
+          break;
+        case 'admin-provider-detail':
+          setCurrentScreen('admin-providers');
           break;
         default:
           setCurrentScreen('home');
@@ -267,6 +296,12 @@ export default function App() {
               <option value="messages">12. Direct Dispatch Chat</option>
               <option value="history">13. Service History</option>
               <option value="profile">14. Account Profile</option>
+              <option value="admin-bookings">15. Admin - All Bookings</option>   {/* 👈 අලුතෙන් */}
+              <option value="admin-users">16. Admin - Users</option>
+              <option value="admin-user-detail">17. Admin - User Detail</option>
+              <option value="admin-portal">18. Admin - Portal Dashboard</option>
+              <option value="admin-providers">19. Admin - Providers</option>
+              <option value="admin-provider-detail">20. Admin - Provider Detail</option>
             </select>
 
             <button
@@ -314,6 +349,7 @@ export default function App() {
           {currentScreen === 'splash' && <SplashScreen />}
           {currentScreen === 'payment' && (
             <PaymentScreen
+              key={checkoutBooking.id}
               booking={checkoutBooking}
               service={services.find((service) => service.id === checkoutBooking.serviceId) || services[0] || SERVICES[0]}
               onBack={() => navigateTo('home')}
@@ -322,17 +358,32 @@ export default function App() {
                 const service = services.find((item) => item.id === checkoutBooking.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(service); setServiceToSchedule(service); setIsScheduleOpen(true);
               }}
-              onPay={async (method, card) => {
+              onPay={async (method, card, online) => {
                 const token = localStorage.getItem('homemate_token') || sessionStorage.getItem('homemate_token');
                 if (!token) throw new Error('Please log in before payment.');
-                const response = await fetch('http://localhost:5000/api/payments', {
+                if (!/^[a-f\d]{24}$/i.test(checkoutBooking.id)) {
+                  throw new Error('This is a preview booking. Create a new booking from Home before paying.');
+                }
+                let response: Response;
+                try {
+                  response = await fetch('http://localhost:5000/api/payments', {
                   method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
-                  body:JSON.stringify({bookingId:checkoutBooking.id,method}),
+                  body:JSON.stringify({bookingId:checkoutBooking.id,method,...(method === 'card' ? {cardLastFour:card} : {}),...(method === 'online' ? {onlineProvider:online?.provider,mobileNumber:online?.mobileNumber} : {})}),
+                  signal: AbortSignal.timeout(15000),
+                  });
+                } catch {
+                  throw new Error('Cannot reach the payment server. Check that the backend is running and MongoDB is connected, then retry.');
+                }
+                const result = await response.json().catch(() => {
+                  throw new Error('The payment server returned an invalid response. Please retry.');
                 });
-                const result = await response.json();
                 if (!response.ok) throw new Error(result.message || 'Unable to save payment');
+                if (!result.success || !result.payment?._id || result.payment.method !== method || result.payment.status !== (method === 'cash' ? 'due' : 'demo_paid')) {
+                  throw new Error('Payment was not confirmed. Please try again.');
+                }
                 setPaymentId(result.payment._id);
-                setPaymentMethod(method); setPaymentCard(card);
+                setOnlineProvider(result.payment.onlineProvider);
+                setPaymentMethod(result.payment.method); setPaymentCard(result.payment.cardLastFour || card);
                 setBookings((previous) => [checkoutBooking, ...previous.filter((booking) => booking.id !== checkoutBooking.id)]);
                 navigateTo('payment-success');
               }}
@@ -344,6 +395,7 @@ export default function App() {
               method={paymentMethod}
               card={paymentCard}
               paymentId={paymentId}
+              onlineProvider={onlineProvider}
               onViewBooking={() => {
                 setBookings((previous) => previous.some((booking) => booking.id === checkoutBooking.id) ? previous : [checkoutBooking, ...previous]);
                 navigateTo('bookings');
@@ -353,41 +405,26 @@ export default function App() {
           )}
 
           {currentScreen === 'onboarding-1' && (
-            <OnboardingScreen
-              pageNumber={1}
-              totalPages={3}
-              title="Book trusted help in minutes"
-              subtitle="Find vetted specialists for cleaning, plumbing, electrical work, and more — all with transparent pricing and same-day support."
-              image={HERO_FEMALE_PRO}
-              badge="1 of 3"
-              accentLabel="Trusted Experts"
-              features={['Verified professionals with real ratings', 'Clear upfront pricing before you book', 'Same-day help when your home needs it now']}
+            <FindProOnboardingScreen
+              key="onboarding-1"
+              illustration="/onboarding/screen-1.png"
               onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
               onSkip={() => navigateTo('home')}
-              onSignIn={() => navigateTo('login')}
-              onBack={handleBack}
             />
           )}
 
           {currentScreen === 'onboarding-2' && (
-            <OnboardingScreen
-              pageNumber={2}
-              totalPages={3}
-              title="Track your arrival in real time"
-              subtitle="See your specialist on the map, receive ETA updates, and stay informed as they head to your home."
-              image={HERO_MALE_TRANSIT}
-              badge="2 of 3"
-              accentLabel="Live Tracking"
-              features={['GPS arrival updates from your technician', 'Instant schedule changes and accurate ETAs', 'Clear communication before the job starts']}
+            <VerifiedProOnboardingScreen
+              key="onboarding-2"
               onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
               onSkip={() => navigateTo('home')}
-              onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
           )}
 
           {currentScreen === 'onboarding-3' && (
             <OnboardingScreen
+              key="onboarding-3"
               pageNumber={3}
               totalPages={3}
               title="Ready when your home needs it"
@@ -423,7 +460,7 @@ export default function App() {
               onLoginSuccess={(role) => {
                 setUserRole(role);
                 showToast(`Welcome back, Admin! Logged in as ${role}.`);
-                navigateTo('admin-profile');
+                navigateTo('admin-portal');
               }}
               onForgotPassword={() => navigateTo('forgot-password')}
               onSignUp={() => navigateTo('register')}
@@ -432,10 +469,13 @@ export default function App() {
 
           {currentScreen === 'login' && (
             <LoginScreen
+              key={userRole}
+              defaultRole={userRole}
               onBack={handleBack}
               onLoginSuccess={(role) => {
                 setUserRole(role);
-                showToast(`Welcome back, Ahmed! Logged in as ${role}.`);
+                showToast(`Welcome back! Logged in as ${role}.`);
+                if (role === 'admin') { navigateTo('admin-profile'); return; }
                 if (pendingBooking) {
                   void handleConfirmBooking(pendingBooking).catch((error) => {
                     showToast(error instanceof Error ? error.message : 'Unable to save booking');
@@ -454,8 +494,10 @@ export default function App() {
             <RegisterScreen
               onBack={handleBack}
               onRegisterSuccess={() => {
-                showToast('🎉 Account registered successfully! Welcome to HomeMate.');
-                navigateTo('home');
+                setUserRole('customer');
+                showToast('Account created successfully. Please log in.');
+                setNavigationHistory(['role-selection']);
+                setCurrentScreen('login');
               }}
               onLogIn={() => navigateTo('login')}
             />
@@ -573,6 +615,14 @@ export default function App() {
             />
           )}
 
+          {/* 👈 අලුතෙන් එකතු කරන්න */}
+          {currentScreen === 'admin-bookings' && (
+            <AdminBookingsScreen
+              onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+
           {currentScreen === 'messages' && (
             <MessagesScreen
               activeSpecialist={activeChatSpecialist || SPECIALISTS.alex}
@@ -595,10 +645,19 @@ export default function App() {
             />
           )}
 
+          {currentScreen === 'admin-portal' && (
+            <AdminPortalScreen
+              onBack={handleBack}
+              onNavigate={navigateTo}
+              showToast={showToast}
+            />
+          )}
+
           {currentScreen === 'admin-profile' && (
             <AdminProfileScreen
               onBack={handleBack}
               onManageCategories={() => navigateTo('admin-categories')}
+              onManageUsers={() => navigateTo('admin-users')}
               onLogout={() => {
                 showToast('Signed out successfully.');
                 navigateTo('admin-login');
@@ -655,8 +714,46 @@ export default function App() {
             />
           )}
 
+          {currentScreen === 'admin-users' && (
+            <UserManagementScreen
+              onBack={handleBack}
+              onViewUser={(userId) => {
+                setAdminSelectedUserId(userId);
+                navigateTo('admin-user-detail');
+              }}
+            />
+          )}
+
+          {currentScreen === 'admin-user-detail' && (
+            <ManageUserScreen
+              userId={adminSelectedUserId}
+              onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'admin-providers' && (
+            <ServiceProvidersScreen
+              onBack={handleBack}
+              onViewProvider={(providerId) => {
+                setAdminSelectedProviderId(providerId);
+                navigateTo('admin-provider-detail');
+              }}
+            />
+          )}
+
+          {currentScreen === 'admin-provider-detail' && (
+            <ProviderVerificationScreen
+              providerId={adminSelectedProviderId}
+              onBack={handleBack}
+              showToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'payment-history' && <PaymentHistoryScreen onBack={handleBack} />}
           {currentScreen === 'profile' && (
             <ProfileScreen
+              onPaymentHistory={() => navigateTo('payment-history')}
               currentRole={userRole}
               onSwitchRole={(newRole) => setUserRole(newRole)}
               onLogout={() => {
@@ -674,7 +771,7 @@ export default function App() {
         </div>
 
         {/* Global Bottom Navigation for Main Tabs */}
-        {(isMainTab || currentScreen === 'payment') && (
+        {isMainTab && (
           <BottomNav
             currentScreen={currentScreen === 'payment' ? 'bookings' : currentScreen}
             onNavigate={(screen) => navigateTo(screen)}

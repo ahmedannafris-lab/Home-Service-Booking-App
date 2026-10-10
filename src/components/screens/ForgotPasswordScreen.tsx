@@ -27,9 +27,9 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-col justify-between h-full min-h-full bg-white overflow-hidden flex-1">
+    <div className="w-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-white no-scrollbar">
       {/* Top Bar */}
-      <div className="w-full shrink-0">
+      <div className="w-full">
         <IOSStatusBar />
         <header className="px-6 pt-1 pb-2 flex items-center justify-between">
           <button
@@ -45,9 +45,9 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 pt-3 pb-4 flex flex-col justify-start no-scrollbar">
+      <div className="px-6 pt-5 pb-6">
         {/* Brand & Title */}
-        <div className="flex flex-col items-center mt-2 mb-4 text-center">
+        <div className="flex flex-col items-center mb-6 text-center">
           <div className="relative flex items-center justify-center mb-3">
             <div className="absolute w-24 h-24 bg-blue-400/20 rounded-full blur-xl pointer-events-none"></div>
             <div className="relative w-20 h-20 rounded-2xl p-1 bg-white shadow-xl shadow-blue-500/20 flex items-center justify-center">
@@ -103,7 +103,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label htmlFor="reset-contact" className="block text-xs font-semibold text-slate-700 mb-1.5">
               {channel === 'email' ? 'Email Address' : 'Phone Number'}
             </label>
             <div className="relative rounded-xl border border-slate-200 bg-slate-50/50 focus-within:bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
@@ -113,6 +113,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 </span>
               </div>
               <input
+                id="reset-contact"
                 type={channel === 'email' ? 'email' : 'tel'}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
@@ -143,7 +144,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="shrink-0 px-6 pb-8 pt-2 text-center">
+      <footer className="px-6 pb-6 pt-1 text-center">
         <p className="text-xs text-slate-500 font-normal">
           Remember your password?{' '}
           <button
@@ -153,7 +154,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
             Back to Login
           </button>
         </p>
-        <div className="w-32 h-1 bg-slate-300 rounded-full mx-auto mt-5"></div>
+        <div aria-hidden="true" className="w-28 h-1 bg-slate-200 rounded-full mx-auto mt-6"></div>
       </footer>
     </div>
   );

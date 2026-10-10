@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react';
 import { SplashScreen } from './components/screens/SplashScreen';
 import { PaymentSuccessScreen } from './components/screens/PaymentSuccessScreen';
 import { PaymentScreen, PaymentMethod } from './components/screens/PaymentScreen';
+import type { OnlineProvider } from './components/screens/OnlinePaymentScreen';
 import { ScreenId, ServiceItem, Specialist, UserRole, Booking } from './types';
 import { SERVICES, CATEGORIES, SPECIALISTS, INITIAL_BOOKINGS, HERO_FEMALE_PRO, HERO_MALE_TRANSIT } from './data/mockData';
 import { WalkthroughScreen } from './components/screens/WalkthroughScreen';
 import { OnboardingScreen } from './components/screens/OnboardingScreen';
+import { FindProOnboardingScreen } from './components/screens/FindProOnboardingScreen';
+import { VerifiedProOnboardingScreen } from './components/screens/VerifiedProOnboardingScreen';
 import { RoleSelectionScreen } from './components/screens/RoleSelectionScreen';
 import { LoginScreen } from './components/screens/LoginScreen';
 import { RegisterScreen } from './components/screens/RegisterScreen';
@@ -33,7 +36,7 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(() => new URLSearchParams(window.location.search).get('screen') === 'payment' ? 'payment' : 'splash');
   useEffect(() => {
     if (currentScreen !== 'splash') return;
-    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
+    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
     return () => window.clearTimeout(timer);
   }, [currentScreen]);
   const [navigationHistory, setNavigationHistory] = useState<ScreenId[]>([]);
@@ -49,6 +52,7 @@ export default function App() {
   });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [paymentCard, setPaymentCard] = useState('1234');
+  const [onlineProvider, setOnlineProvider] = useState<OnlineProvider | undefined>();
   const [services, setServices] = useState<ServiceItem[]>(() => {
     try {
       const storedServices = window.localStorage.getItem('homemate-services');
@@ -265,6 +269,10 @@ export default function App() {
               <option value="history">13. Service History</option>
               <option value="profile">14. Account Profile</option>
               <option value="admin-bookings">15. Admin - All Bookings</option>   {/* 👈 අලුතෙන් */}
+              <option value="admin-login">16. Admin - Login</option>
+              <option value="admin-profile">17. Admin - Profile</option>
+              <option value="admin-categories">18. Admin - Manage Categories</option>
+              <option value="admin-category-services">19. Admin - Category Services</option>
             </select>
 
             <button
@@ -312,6 +320,7 @@ export default function App() {
           {currentScreen === 'splash' && <SplashScreen />}
           {currentScreen === 'payment' && (
             <PaymentScreen
+              key={checkoutBooking.id}
               booking={checkoutBooking}
               service={services.find((service) => service.id === checkoutBooking.serviceId) || services[0] || SERVICES[0]}
               onBack={() => navigateTo('home')}
@@ -320,17 +329,32 @@ export default function App() {
                 const service = services.find((item) => item.id === checkoutBooking.serviceId) || services[0] || SERVICES[0];
                 setSelectedService(service); setServiceToSchedule(service); setIsScheduleOpen(true);
               }}
-              onPay={async (method, card) => {
+              onPay={async (method, card, online) => {
                 const token = localStorage.getItem('homemate_token') || sessionStorage.getItem('homemate_token');
                 if (!token) throw new Error('Please log in before payment.');
-                const response = await fetch('http://localhost:5000/api/payments', {
+                if (!/^[a-f\d]{24}$/i.test(checkoutBooking.id)) {
+                  throw new Error('This is a preview booking. Create a new booking from Home before paying.');
+                }
+                let response: Response;
+                try {
+                  response = await fetch('http://localhost:5000/api/payments', {
                   method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
-                  body:JSON.stringify({bookingId:checkoutBooking.id,method}),
+                  body:JSON.stringify({bookingId:checkoutBooking.id,method,...(method === 'card' ? {cardLastFour:card} : {}),...(method === 'online' ? {onlineProvider:online?.provider,mobileNumber:online?.mobileNumber} : {})}),
+                  signal: AbortSignal.timeout(15000),
+                  });
+                } catch {
+                  throw new Error('Cannot reach the payment server. Check that the backend is running and MongoDB is connected, then retry.');
+                }
+                const result = await response.json().catch(() => {
+                  throw new Error('The payment server returned an invalid response. Please retry.');
                 });
-                const result = await response.json();
                 if (!response.ok) throw new Error(result.message || 'Unable to save payment');
+                if (!result.success || !result.payment?._id || result.payment.method !== method || result.payment.status !== (method === 'cash' ? 'due' : 'demo_paid')) {
+                  throw new Error('Payment was not confirmed. Please try again.');
+                }
                 setPaymentId(result.payment._id);
-                setPaymentMethod(method); setPaymentCard(card);
+                setOnlineProvider(result.payment.onlineProvider);
+                setPaymentMethod(result.payment.method); setPaymentCard(result.payment.cardLastFour || card);
                 setBookings((previous) => [checkoutBooking, ...previous.filter((booking) => booking.id !== checkoutBooking.id)]);
                 navigateTo('payment-success');
               }}
@@ -342,6 +366,7 @@ export default function App() {
               method={paymentMethod}
               card={paymentCard}
               paymentId={paymentId}
+              onlineProvider={onlineProvider}
               onViewBooking={() => {
                 setBookings((previous) => previous.some((booking) => booking.id === checkoutBooking.id) ? previous : [checkoutBooking, ...previous]);
                 navigateTo('bookings');
@@ -351,41 +376,26 @@ export default function App() {
           )}
 
           {currentScreen === 'onboarding-1' && (
-            <OnboardingScreen
-              pageNumber={1}
-              totalPages={3}
-              title="Book trusted help in minutes"
-              subtitle="Find vetted specialists for cleaning, plumbing, electrical work, and more — all with transparent pricing and same-day support."
-              image={HERO_FEMALE_PRO}
-              badge="1 of 3"
-              accentLabel="Trusted Experts"
-              features={['Verified professionals with real ratings', 'Clear upfront pricing before you book', 'Same-day help when your home needs it now']}
+            <FindProOnboardingScreen
+              key="onboarding-1"
+              illustration="/onboarding/screen-1.png"
               onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
               onSkip={() => navigateTo('home')}
-              onSignIn={() => navigateTo('login')}
-              onBack={handleBack}
             />
           )}
 
           {currentScreen === 'onboarding-2' && (
-            <OnboardingScreen
-              pageNumber={2}
-              totalPages={3}
-              title="Track your arrival in real time"
-              subtitle="See your specialist on the map, receive ETA updates, and stay informed as they head to your home."
-              image={HERO_MALE_TRANSIT}
-              badge="2 of 3"
-              accentLabel="Live Tracking"
-              features={['GPS arrival updates from your technician', 'Instant schedule changes and accurate ETAs', 'Clear communication before the job starts']}
+            <VerifiedProOnboardingScreen
+              key="onboarding-2"
               onNext={() => navigateTo(getNextOnboardingScreen(currentScreen) ?? 'role-selection')}
               onSkip={() => navigateTo('home')}
-              onSignIn={() => navigateTo('login')}
               onBack={handleBack}
             />
           )}
 
           {currentScreen === 'onboarding-3' && (
             <OnboardingScreen
+              key="onboarding-3"
               pageNumber={3}
               totalPages={3}
               title="Ready when your home needs it"
@@ -430,10 +440,13 @@ export default function App() {
 
           {currentScreen === 'login' && (
             <LoginScreen
+              key={userRole}
+              defaultRole={userRole}
               onBack={handleBack}
               onLoginSuccess={(role) => {
                 setUserRole(role);
-                showToast(`Welcome back, Ahmed! Logged in as ${role}.`);
+                showToast(`Welcome back! Logged in as ${role}.`);
+                if (role === 'admin') { navigateTo('admin-profile'); return; }
                 if (pendingBooking) {
                   void handleConfirmBooking(pendingBooking).catch((error) => {
                     showToast(error instanceof Error ? error.message : 'Unable to save booking');
@@ -452,8 +465,10 @@ export default function App() {
             <RegisterScreen
               onBack={handleBack}
               onRegisterSuccess={() => {
-                showToast('🎉 Account registered successfully! Welcome to HomeMate.');
-                navigateTo('home');
+                setUserRole('customer');
+                showToast('Account created successfully. Please log in.');
+                setNavigationHistory(['role-selection']);
+                setCurrentScreen('login');
               }}
               onLogIn={() => navigateTo('login')}
             />
@@ -680,7 +695,7 @@ export default function App() {
         </div>
 
         {/* Global Bottom Navigation for Main Tabs */}
-        {(isMainTab || currentScreen === 'payment') && (
+        {isMainTab && (
           <BottomNav
             currentScreen={currentScreen === 'payment' ? 'bookings' : currentScreen}
             onNavigate={(screen) => navigateTo(screen)}

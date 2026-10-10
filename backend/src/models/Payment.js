@@ -18,6 +18,9 @@ const paymentSchema = new mongoose.Schema(
       enum: ["card", "online", "cash"],
       required: true,
     },
+    cardLastFour: { type: String, match: /^\d{4}$/ },
+    onlineProvider: { type: String, enum: ["genie", "ezcash", "bank"] },
+    mobileLastFour: { type: String, match: /^\d{4}$/ },
     status: {
       type: String,
       enum: ["demo_paid", "due", "paid", "failed", "refunded"],

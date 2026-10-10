@@ -85,7 +85,7 @@ router.post("/bookings", auth, async (req, res) => {
 // POST /api/payments — authenticated, records demo payment
 router.post("/payments", auth, async (req, res) => {
   try {
-    const { bookingId, method } = req.body;
+    const { bookingId, method, cardLastFour, onlineProvider, mobileNumber } = req.body || {};
 
     if (
       !mongoose.isObjectIdOrHexString(bookingId) ||
@@ -94,6 +94,16 @@ router.post("/payments", auth, async (req, res) => {
       return res.status(400).json({ success: false, message: "Valid booking ID and payment method required" });
     }
 
+    if (method === "card" && (typeof cardLastFour !== "string" || !/^\d{4}$/.test(cardLastFour))) {
+      return res.status(400).json({ success: false, message: "Valid card last four digits required" });
+    }
+    if (method === "online" && !["genie", "ezcash", "bank"].includes(onlineProvider)) {
+      return res.status(400).json({ success: false, message: "Choose Genie, eZ Cash or Bank Transfer" });
+    }
+    if (method === "online" && onlineProvider !== "bank" && (typeof mobileNumber !== "string" || !/^\+947\d{8}$/.test(mobileNumber))) {
+      return res.status(400).json({ success: false, message: "Valid Sri Lankan mobile number required" });
+    }
+    const onlineMetadata = method === "online" ? { onlineProvider, ...(onlineProvider !== "bank" ? { mobileLastFour: mobileNumber.slice(-4) } : {}) } : {};
     const booking = await Booking.findOne({ _id: bookingId, customerId: req.user._id });
     if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
     if (booking.status !== "scheduled") {
@@ -108,6 +118,8 @@ router.post("/payments", auth, async (req, res) => {
           $setOnInsert: {
             customerId: req.user._id,
             method,
+            ...(method === "card" ? { cardLastFour } : {}),
+            ...onlineMetadata,
             status: method === "cash" ? "due" : "demo_paid",
             amountMinor: booking.amountMinor,
             currency: booking.currency,
@@ -126,6 +138,12 @@ router.post("/payments", auth, async (req, res) => {
       return res.status(409).json({ success: false, message: "A different payment method is already recorded" });
     }
 
+    if (method === "card" && payment.cardLastFour && payment.cardLastFour !== cardLastFour) {
+      return res.status(409).json({ success: false, message: "A different card is already recorded for this booking" });
+    }
+    if (method === "online" && payment.onlineProvider && (payment.onlineProvider !== onlineProvider || payment.mobileLastFour !== onlineMetadata.mobileLastFour)) {
+      return res.status(409).json({ success: false, message: "A different online payment is already recorded for this booking" });
+    }
     res.json({ success: true, payment });
   } catch (error) {
     console.error(error.message);

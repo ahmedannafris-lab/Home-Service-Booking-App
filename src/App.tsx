@@ -32,9 +32,12 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(() => new URLSearchParams(window.location.search).get('screen') === 'payment' ? 'payment' : 'splash');
   useEffect(() => {
     if (currentScreen !== 'splash') return;
-    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
-    const timer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
-    return () => window.clearTimeout(timer);
+    const initialSplashTimer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 2200);
+    const fallbackSplashTimer = window.setTimeout(() => setCurrentScreen((screen) => screen === 'splash' ? 'onboarding-1' : screen), 3000);
+    return () => {
+      window.clearTimeout(initialSplashTimer);
+      window.clearTimeout(fallbackSplashTimer);
+    };
   }, [currentScreen]);
   const [navigationHistory, setNavigationHistory] = useState<ScreenId[]>([]);
   const [userRole, setUserRole] = useState<UserRole>('customer');

@@ -95,18 +95,28 @@ export const CategoryListScreen: React.FC<CategoryListScreenProps> = ({
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
                 aria-label={`View ${cat.name} services`}
-                className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white border border-slate-100 shadow-xs hover:shadow-md hover:border-blue-300 active:scale-95 transition-all text-center cursor-pointer group"
+                className="group relative h-[182px] overflow-hidden flex flex-col justify-end rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all text-left cursor-pointer"
               >
-                <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform ${cat.iconBgClass}`}
-                >
-                  <span className="material-symbols-outlined text-[28px]">{cat.icon}</span>
+                <div className="absolute inset-0 h-[122px] overflow-hidden">
+                  <img
+                    src={cat.cardImage}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 to-transparent" />
                 </div>
-                <h3 className="text-sm font-bold text-slate-900 leading-tight">{cat.name}</h3>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                  <span className="text-xs text-slate-500 font-medium">
-                    {serviceCount} {serviceCount === 1 ? 'service' : 'services'}
+                <div className="relative z-10 flex h-[60px] w-full items-center justify-between gap-1 bg-white px-3">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-bold text-slate-900 leading-tight">{cat.name}</h3>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                      <span className="text-xs text-slate-500 font-medium">
+                        {serviceCount} {serviceCount === 1 ? 'service' : 'services'}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined shrink-0 text-[18px] text-slate-400 group-hover:text-blue-600 transition-colors">
+                    arrow_forward
                   </span>
                 </div>
               </button>

@@ -1,5 +1,12 @@
 import { ServiceCategory, ServiceItem, Specialist, Review, Booking } from '../types';
 import homemateLogoMark from '../assets/homemate-logo-mark.svg';
+import plumbingCategoryImage from '../assets/category-plumbing.jpg';
+import electricalCategoryImage from '../assets/category-electrical.jpg';
+import cleaningCategoryImage from '../assets/category-cleaning.jpg';
+import acRepairCategoryImage from '../assets/category-ac-repair.jpg';
+import gardeningCategoryImage from '../assets/category-gardening.jpg';
+import paintingCategoryImage from '../assets/category-painting.jpg';
+import appliancesCategoryImage from '../assets/category-appliances.jpg';
 
 export const LOGO_URL = homemateLogoMark;
 export const USER_AVATAR = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDWb7iTEl55TTJ6PwLB_iLdkXieK44IXSYDBQU_Z_TCoQaQKK2CAqBgTkOEa_wE2myK8klHG1MmS1TSLkJYZx8oNu5TbADSimNNplUq_2VKBcLv6i97WjvXDp71eL6E9L7Awvlbq18pEVbwiw0JjwtR27Axze6t6dViSZnz0-fLX2dhZ-8N7prn7By_kuvVZooN93WVPlYrC4VLin6cYx5tdT35uVce0LbVpmI_Lj5rKWM3nTpYhiCi';
@@ -95,6 +102,7 @@ export const CATEGORIES: ServiceCategory[] = [
     id: 'plumbing',
     name: 'Plumbing',
     icon: 'plumbing',
+    cardImage: plumbingCategoryImage,
     specCount: 14,
     bgClass: 'bg-blue-50/50',
     iconBgClass: 'bg-primary-fixed/50 text-primary',
@@ -111,6 +119,7 @@ export const CATEGORIES: ServiceCategory[] = [
     id: 'electrical',
     name: 'Electrical',
     icon: 'bolt',
+    cardImage: electricalCategoryImage,
     specCount: 15,
     bgClass: 'bg-amber-50/50',
     iconBgClass: 'bg-tertiary-fixed/60 text-tertiary',
@@ -127,6 +136,7 @@ export const CATEGORIES: ServiceCategory[] = [
     id: 'cleaning',
     name: 'Cleaning',
     icon: 'cleaning_services',
+    cardImage: cleaningCategoryImage,
     specCount: 18,
     bgClass: 'bg-cyan-50/50',
     iconBgClass: 'bg-secondary-fixed/60 text-secondary',
@@ -143,6 +153,7 @@ export const CATEGORIES: ServiceCategory[] = [
     id: 'ac-repair',
     name: 'AC Repair',
     icon: 'mode_fan',
+    cardImage: acRepairCategoryImage,
     specCount: 18,
     bgClass: 'bg-sky-50/50',
     iconBgClass: 'bg-secondary-fixed-dim/40 text-on-secondary-fixed-variant',
@@ -159,6 +170,7 @@ export const CATEGORIES: ServiceCategory[] = [
     id: 'gardening',
     name: 'Gardening',
     icon: 'nest_eco_leaf',
+    cardImage: gardeningCategoryImage,
     specCount: 12,
     bgClass: 'bg-emerald-50/50',
     iconBgClass: 'bg-emerald-100 text-emerald-700',
@@ -175,6 +187,7 @@ export const CATEGORIES: ServiceCategory[] = [
     id: 'painting',
     name: 'Painting',
     icon: 'format_paint',
+    cardImage: paintingCategoryImage,
     specCount: 8,
     bgClass: 'bg-purple-50/50',
     iconBgClass: 'bg-surface-container-highest text-on-surface-variant',
@@ -191,6 +204,7 @@ export const CATEGORIES: ServiceCategory[] = [
     id: 'appliances',
     name: 'Appliances',
     icon: 'kitchen',
+    cardImage: appliancesCategoryImage,
     specCount: 9,
     bgClass: 'bg-indigo-50/50',
     iconBgClass: 'bg-primary-fixed/40 text-primary-container',

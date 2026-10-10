@@ -166,16 +166,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
-                className="group relative min-h-[142px] flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all text-center cursor-pointer"
+                className="group relative h-[142px] overflow-hidden flex flex-col justify-end rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all text-left cursor-pointer"
               >
-                <span className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${cat.iconBgClass}`}>
-                  <span className="material-symbols-outlined text-[24px]">{cat.icon}</span>
-                </span>
-                <span className="text-sm font-bold text-slate-800 leading-tight">{cat.name}</span>
-                <span className="text-[11px] text-slate-500">{cat.specCount} specialists</span>
-                <span className="material-symbols-outlined absolute top-3 right-3 text-[17px] text-slate-300 group-hover:text-blue-500 transition-colors">
-                  arrow_forward
-                </span>
+                <div className="absolute inset-0 h-[88px] overflow-hidden">
+                  <img src={cat.cardImage} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 to-transparent" />
+                </div>
+                <div className="relative z-10 flex h-[54px] w-full items-center justify-between gap-1 bg-white px-3">
+                  <div className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-slate-800 leading-tight">{cat.name}</span>
+                    <span className="mt-0.5 block text-[10px] text-slate-500">{cat.specCount} specialists</span>
+                  </div>
+                  <span className="material-symbols-outlined shrink-0 text-[16px] text-slate-300 group-hover:text-blue-500 transition-colors">
+                    arrow_forward
+                  </span>
+                </div>
               </button>
             ))}
           </div>

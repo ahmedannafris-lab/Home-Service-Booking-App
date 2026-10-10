@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
 import { LOGO_URL, USER_AVATAR, CATEGORIES } from '../../data/mockData';
 import { ServiceItem } from '../../types';
+import gardeningFeaturedImage from '../../assets/gardening-featured.jpg';
 
 interface HomeScreenProps {
   services: ServiceItem[];
@@ -31,8 +32,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const locations = ['Colombo, LK', 'Kandy, LK', 'Galle, LK', 'Negombo, LK', 'Dehiwala, LK'];
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
   const featuredCategory = CATEGORIES.find((category) => category.id === 'gardening') ?? CATEGORIES[0];
   const searchResults = searchQuery.trim()
     ? services.filter((service) =>
@@ -89,65 +88,43 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* Main Content Area */}
       <div className="flex flex-col w-full pb-6">
-        {/* User Greeting & Location Pill */}
-        <section className="px-5 pt-3 pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <img
-                  className="w-12 h-12 rounded-full object-cover shadow-sm ring-2 ring-blue-100"
-                  src={USER_AVATAR}
-                  alt="Ahmed"
-                />
-                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-cyan-100 flex items-center justify-center ring-1 ring-white">
-                  <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-                </span>
-              </div>
-              <div>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-slate-500 font-medium">{greeting}</span>
-                </div>
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight">Ahmed</h2>
-              </div>
-            </div>
+        {/* Location Selector */}
+        <section className="px-5 pt-3 flex justify-end">
+          <div className="relative">
+            <button
+              onClick={() => setShowLocationPicker(!showLocationPicker)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-xs font-semibold text-slate-800 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-blue-600 text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                location_on
+              </span>
+              <span>{selectedLocation}</span>
+              <span className="material-symbols-outlined text-slate-400 text-[16px]">expand_more</span>
+            </button>
 
-            {/* Location Selector */}
-            <div className="relative">
-              <button
-                onClick={() => setShowLocationPicker(!showLocationPicker)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-xs font-semibold text-slate-800 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-blue-600 text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  location_on
-                </span>
-                <span>{selectedLocation}</span>
-                <span className="material-symbols-outlined text-slate-400 text-[16px]">expand_more</span>
-              </button>
-
-              {showLocationPicker && (
-                <div className="absolute right-0 top-10 w-44 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 animate-fade-in">
-                  <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                    Select City
-                  </div>
-                  {locations.map((loc) => (
-                    <button
-                      key={loc}
-                      onClick={() => {
-                        setSelectedLocation(loc);
-                        setShowLocationPicker(false);
-                        showToast(`Coverage updated to ${loc}`);
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-between cursor-pointer"
-                    >
-                      <span>{loc}</span>
-                      {selectedLocation === loc && (
-                        <span className="material-symbols-outlined text-blue-600 text-[16px]">check</span>
-                      )}
-                    </button>
-                  ))}
+            {showLocationPicker && (
+              <div className="absolute right-0 top-10 w-44 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 animate-fade-in">
+                <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  Select City
                 </div>
-              )}
-            </div>
+                {locations.map((loc) => (
+                  <button
+                    key={loc}
+                    onClick={() => {
+                      setSelectedLocation(loc);
+                      setShowLocationPicker(false);
+                      showToast(`Coverage updated to ${loc}`);
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{loc}</span>
+                    {selectedLocation === loc && (
+                      <span className="material-symbols-outlined text-blue-600 text-[16px]">check</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -177,8 +154,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* Featured service banner */}
         <section className="px-5 py-2">
-          <div className="relative min-h-[218px] overflow-hidden rounded-2xl bg-slate-900 p-5 text-white shadow-md flex flex-col justify-between">
-            <img src={featuredCategory.heroImage} alt="Gardening service" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative h-[272px] overflow-hidden rounded-2xl bg-slate-900 p-5 text-white shadow-md flex flex-col justify-between">
+            <img src={gardeningFeaturedImage} alt="Lush garden with trimmed hedges and flowers" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/70 to-slate-900/15" />
             <div className="relative z-10 max-w-[78%]">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-300 text-cyan-950 text-[10px] font-bold tracking-wide uppercase shadow-xs">
@@ -223,15 +200,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
-                className="group min-h-[112px] flex flex-col items-center justify-center p-3 rounded-xl bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 active:scale-[0.98] transition-all text-center cursor-pointer"
+                className="group min-h-[112px] flex flex-col items-center justify-start p-4 rounded-xl bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 active:scale-[0.98] transition-all text-center cursor-pointer"
               >
-                <div
-                  className={`w-11 h-11 rounded-lg flex items-center justify-center mb-2 transition-transform group-hover:scale-105 ${cat.iconBgClass}`}
-                >
-                  <span className="material-symbols-outlined text-[24px]">{cat.icon}</span>
-                </div>
+                <span className="material-symbols-outlined text-[24px] text-[#193548] mb-5 transition-transform group-hover:scale-105">
+                  {cat.icon}
+                </span>
                 <span className="text-xs font-bold text-slate-800 leading-tight">{cat.name}</span>
-                <span className="text-[10px] text-slate-400 mt-0.5">{cat.specCount} Specs</span>
               </button>
             ))}
           </div>

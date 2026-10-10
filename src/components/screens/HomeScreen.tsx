@@ -27,21 +27,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onBack,
   showToast,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('Colombo, LK');
   const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const locations = ['Colombo, LK', 'Kandy, LK', 'Galle, LK', 'Negombo, LK', 'Dehiwala, LK'];
   const featuredCategory = CATEGORIES.find((category) => category.id === 'gardening') ?? CATEGORIES[0];
-  const searchResults = searchQuery.trim()
-    ? services.filter((service) =>
-        `${service.title} ${service.categoryName} ${service.description}`
-          .toLowerCase()
-          .includes(searchQuery.trim().toLowerCase())
-      ).slice(0, 6)
-    : [];
-
-  // Filtered popular services
   const popularServices = services.slice(0, 4);
 
   return (
@@ -128,30 +118,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </section>
 
-        {/* Interactive Search Bar */}
-        <section className="px-5 py-2">
-          <div className="relative flex items-center">
-            <div className="absolute left-3.5 flex items-center pointer-events-none text-slate-400">
-              <span className="material-symbols-outlined text-[20px]">search</span>
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="What service do you need?"
-              className="w-full h-12 pl-10 pr-12 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 shadow-xs transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[14px]">close</span>
-              </button>
-            )}
-          </div>
-        </section>
-
         {/* Featured service banner */}
         <section className="px-5 py-2">
           <div className="relative h-[272px] overflow-hidden rounded-2xl bg-slate-900 p-5 text-white shadow-md flex flex-col justify-between">
@@ -200,12 +166,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
-                className="group min-h-[112px] flex flex-col items-center justify-start p-4 rounded-xl bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 active:scale-[0.98] transition-all text-center cursor-pointer"
+                className="group relative min-h-[142px] flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all text-center cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[24px] text-[#193548] mb-5 transition-transform group-hover:scale-105">
-                  {cat.icon}
+                <span className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${cat.iconBgClass}`}>
+                  <span className="material-symbols-outlined text-[24px]">{cat.icon}</span>
                 </span>
-                <span className="text-xs font-bold text-slate-800 leading-tight">{cat.name}</span>
+                <span className="text-sm font-bold text-slate-800 leading-tight">{cat.name}</span>
+                <span className="text-[11px] text-slate-500">{cat.specCount} specialists</span>
+                <span className="material-symbols-outlined absolute top-3 right-3 text-[17px] text-slate-300 group-hover:text-blue-500 transition-colors">
+                  arrow_forward
+                </span>
               </button>
             ))}
           </div>
@@ -232,25 +202,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </section>
 
-        {/* Service search results and popular picks */}
+        {/* Popular service picks */}
         <section className="px-5 pt-3 pb-2">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900">{searchQuery.trim() ? 'Search Results' : 'Popular Services'}</h3>
-              <p className="text-xs text-slate-500">{searchQuery.trim() ? `${searchResults.length} matching services` : 'Recommended services for your home'}</p>
+              <h3 className="text-base font-bold text-slate-900">Popular Services</h3>
+              <p className="text-xs text-slate-500">Recommended services for your home</p>
             </div>
-            {!searchQuery.trim() && (
-              <button
-                onClick={onViewAllCategories}
-                className="text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
-              >
-                See All
-              </button>
-            )}
+            <button
+              onClick={onViewAllCategories}
+              className="text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
+            >
+              See All
+            </button>
           </div>
 
           <div className="flex flex-col gap-3">
-            {(searchQuery.trim() ? searchResults : popularServices).map((service) => (
+            {popularServices.map((service) => (
               <article
                 key={service.id}
                 onClick={() => onSelectService(service)}
@@ -299,12 +267,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </button>
               </article>
             ))}
-            {searchQuery.trim() && searchResults.length === 0 && (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-7 text-center">
-                <p className="text-sm font-semibold text-slate-800">No matching services</p>
-                <p className="mt-1 text-xs text-slate-500">Try a service or category name.</p>
-              </div>
-            )}
           </div>
         </section>
       </div>

@@ -13,7 +13,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
   onContinue,
   onPartnerClick,
 }) => {
-  const [selectedRole, setSelectedRole] = useState<UserRole>('customer');
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
 
   return (
     <div className="w-full flex flex-col justify-between h-full min-h-full bg-white overflow-hidden flex-1">
@@ -190,10 +190,12 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
       {/* Footer */}
       <footer className="w-full px-6 pt-3 pb-6 bg-white border-t border-slate-100 shrink-0">
         <button
-          onClick={() => onContinue(selectedRole)}
-          className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-semibold text-sm rounded-xl shadow-md shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 cursor-pointer"
+          disabled={selectedRole === null}
+          onClick={() => { if (selectedRole) onContinue(selectedRole); }}
+          className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-semibold text-sm rounded-xl shadow-md shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed disabled:active:scale-100"
         >
           <span>
+            {selectedRole === null && 'Select a role to continue'}
             {selectedRole === 'customer' && 'Continue as HomeMate User'}
             {selectedRole === 'provider' && 'Continue as Service Provider'}
             {selectedRole === 'admin' && 'Continue as Admin'}

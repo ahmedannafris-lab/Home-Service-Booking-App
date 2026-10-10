@@ -35,6 +35,7 @@ const loadProfile = (): ProfileDetails => {
 };
 
 interface ProfileScreenProps {
+  onPaymentHistory: () => void;
   currentRole: UserRole;
   onLogout: () => void;
   onBack?: () => void;
@@ -43,6 +44,8 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   currentRole,
+  onPaymentHistory,
+  onSwitchRole,
   onLogout,
   onBack,
   showToast,
@@ -218,6 +221,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </section>
 
         {/* Menu Items */}
+        <button onClick={onPaymentHistory} className="w-full bg-white rounded-2xl border border-slate-100 px-4 py-4 flex items-center justify-between text-sm font-semibold text-slate-800">
+          <span>Payment History & Receipts</span><span className="text-blue-600">View →</span>
+        </button>
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-xs divide-y divide-slate-100 overflow-hidden text-xs">
         <section>
           <div className="mb-2.5 flex items-end justify-between px-1">
             <div>

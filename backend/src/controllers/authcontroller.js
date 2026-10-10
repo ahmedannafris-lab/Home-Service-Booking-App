@@ -165,6 +165,13 @@ async function login(req, res) {
       });
     }
 
+    if (user.status === "inactive") {
+      return res.status(403).json({ success: false, message: "Your account is inactive. Contact support." });
+    }
+    if (req.body.role && req.body.role !== user.role) {
+      return res.status(403).json({ success: false, message: "This account does not match the selected role. Select your account's role and try again." });
+    }
+
     const token = jwt.sign(
       { sub: authenticatedUser.id, role: authenticatedUser.role },
       process.env.JWT_SECRET,

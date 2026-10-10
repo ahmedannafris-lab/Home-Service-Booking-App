@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Bell, ChevronRight, KeyRound, LogOut, Mail, Pencil, Save, ShieldCheck, Tags, UserRound, X } from 'lucide-react';
+import { ArrowLeft, Bell, ChevronRight, KeyRound, LogOut, Mail, Pencil, Save, ShieldCheck, Tags, UserRound, X, Users } from 'lucide-react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
 
 interface AdminProfileScreenProps {
   onBack: () => void;
   onManageCategories: () => void;
+  onManageUsers: () => void;
   onLogout: () => void;
   showToast: (message: string) => void;
 }
@@ -31,6 +32,7 @@ const loadAdminProfile = (): AdminProfileDetails => {
 export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
   onBack,
   onManageCategories,
+  onManageUsers,
   onLogout,
   showToast,
 }) => {
@@ -147,6 +149,15 @@ export const AdminProfileScreen: React.FC<AdminProfileScreenProps> = ({
       </section>
 
       <section aria-label="Admin profile settings" className="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100">
+        <button
+          type="button"
+          onClick={onManageUsers}
+          className="w-full px-4 py-4 flex items-center gap-3 text-left hover:bg-slate-50"
+        >
+          <Users size={18} className="text-blue-700" />
+          <span className="flex-1 text-sm font-semibold text-slate-800">Manage Users</span>
+          <ChevronRight size={18} className="text-slate-400" />
+        </button>
         <button
           type="button"
           onClick={onManageCategories}

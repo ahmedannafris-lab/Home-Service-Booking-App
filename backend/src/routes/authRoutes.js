@@ -78,6 +78,15 @@ router.post(
 router.post(
   "/login",
   [
+    body("role").optional().isIn(["customer", "provider", "admin"]).withMessage("Select a valid role"),
+    body("email")
+      .isString()
+      .withMessage("Email is required")
+      .bail()
+      .trim()
+      .isEmail()
+      .withMessage("Enter a valid email"),
+
     body("password")
       .isString()
       .withMessage("Password is required")

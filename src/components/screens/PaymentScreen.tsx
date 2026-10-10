@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { ArrowRight, Banknote, CalendarDays, ChevronLeft, CreditCard, ShieldCheck } from 'lucide-react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
 import { Booking, ServiceItem } from '../../types';
+import { AddCardScreen } from './AddCardScreen';
+import { OnlinePaymentScreen } from './OnlinePaymentScreen';
+import type { OnlinePaymentDetails } from './OnlinePaymentScreen';
 
 export type PaymentMethod = 'card' | 'online' | 'cash';
 interface Props {
@@ -10,23 +13,48 @@ interface Props {
   onBack: () => void;
   onEdit: () => void;
   onHelp: () => void;
-  onPay: (method: PaymentMethod, card: string) => void | Promise<void>;
+  onPay: (method: PaymentMethod, card: string, online?: OnlinePaymentDetails) => void | Promise<void>;
 }
 
 export function PaymentScreen({ booking, service, onBack, onEdit, onHelp, onPay }: Props) {
   const [method, setMethod] = useState<PaymentMethod>('card');
   const [card, setCard] = useState('4321');
-  const [changingCard, setChangingCard] = useState(false);
+  const [addingCard, setAddingCard] = useState(false);
+  const [payingOnline, setPayingOnline] = useState(false);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState('');
   const handlePay = async () => {
     if (paying) return;
+    if (method === 'card') {
+      setAddingCard(true);
+      return;
+    }
+    if (method === 'online') {
+      setPayingOnline(true);
+      return;
+    }
     setPaying(true); setError('');
     try { await onPay(method, card); }
     catch (error) { setError(error instanceof Error ? error.message : 'Unable to save payment'); }
     finally { setPaying(false); }
   };
   const amount = `LKR ${booking.price.toLocaleString('en-US')}`;
+  if (payingOnline) {
+    return <OnlinePaymentScreen booking={booking} onBack={() => setPayingOnline(false)} onHelp={onHelp} onPay={details => onPay('online', '', details)} />;
+  }
+  if (addingCard) {
+    return (
+      <AddCardScreen
+        amount={booking.price}
+        onBack={() => setAddingCard(false)}
+        onHelp={onHelp}
+        onPay={async (lastFour) => {
+          await onPay('card', lastFour);
+          setCard(lastFour);
+        }}
+      />
+    );
+  }
   return (
     <section className="flex flex-1 min-h-0 flex-col bg-[#f6f8fb] text-[#213e60]">
       <IOSStatusBar showIsland={false} />
@@ -56,14 +84,13 @@ export function PaymentScreen({ booking, service, onBack, onEdit, onHelp, onPay 
                 <span className="flex-1"><span className="flex items-center gap-2 text-[12px] font-bold">{option.title}{option.badge && <span className={`rounded px-1.5 py-0.5 text-[8px] ${option.id === 'cash' ? 'bg-amber-50 text-amber-600' : 'bg-blue-100 text-blue-500'}`}>{option.badge}</span>}</span><span className="mt-1 block text-[10px] text-[#90a0b6]">{option.description}</span></span>
                 {option.id === 'card' ? <span className="flex gap-1"><span className="rounded border border-slate-200 bg-white px-1 py-0.5 text-[8px] font-bold italic text-blue-800">VISA</span><span className="relative h-4 w-6 rounded bg-white"><span className="absolute left-1 top-1 h-2 w-2 rounded-full bg-red-500" /><span className="absolute left-2.5 top-1 h-2 w-2 rounded-full bg-amber-400" /></span></span> : option.id === 'online' ? <span className="flex gap-1 text-[8px]"><span className="rounded bg-slate-50 px-1 py-1">UPI</span><span className="rounded bg-emerald-50 px-1 py-1 text-emerald-600">eZ Cash</span></span> : <span className="rounded-lg bg-emerald-50 p-1.5 text-emerald-500"><Banknote size={15} /></span>}
               </button>
-              {option.id === 'card' && method === 'card' && <div className="flex items-center gap-2 border-t border-blue-100 px-3 py-2 text-[10px]"><CreditCard size={14} className="text-blue-500" /><span className="flex-1">•••• •••• •••• {card}</span><button onClick={() => setChangingCard(!changingCard)} className="font-semibold text-blue-500 cursor-pointer">{changingCard ? 'Done' : 'Change'}</button></div>}
+              {option.id === 'card' && method === 'card' && <div className="flex items-center gap-2 border-t border-blue-100 px-3 py-2 text-xs"><CreditCard size={14} className="text-blue-500" /><span className="flex-1">Enter card details at checkout</span><button onClick={() => setAddingCard(true)} className="font-semibold text-blue-500 cursor-pointer">Add Card</button></div>}
             </div>
           ))}
         </div>
-        {changingCard && method === 'card' && <label className="mt-3 block text-xs text-slate-500">Demo card ending<input aria-label="Demo card last four digits" value={card} inputMode="numeric" maxLength={4} onChange={(event) => setCard(event.target.value.replace(/\D/g, ''))} className="mt-1 w-full rounded-lg border border-blue-200 bg-white p-2 text-slate-700" /></label>}
-        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-[#e6f7f1] p-3"><span className="rounded-full bg-emerald-100 p-2 text-emerald-600"><ShieldCheck size={17} /></span><div><h3 className="text-[11px] font-bold">Secure Payment Guarantee</h3><p className="mt-1 text-[10px] leading-relaxed text-[#7a91a4]">Your payment information is encrypted and held in escrow until service completion.</p></div></div>
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-[#e6f7f1] p-3"><span className="rounded-full bg-emerald-100 p-2 text-emerald-600"><ShieldCheck size={17} /></span><div><h3 className="text-xs font-bold">Demo Checkout</h3><p className="mt-1 text-xs leading-relaxed text-[#7a91a4]">Card and online payments are simulated. No money is charged and full card details are not saved.</p></div></div>
       </div>
-      <footer className="shrink-0 px-5 pb-3 pt-1"><div className="mb-4 flex items-center justify-between"><div><p className="text-[11px] text-[#91a1b8]">Total Amount</p><p className="mt-1 text-[8px] text-emerald-600">Includes taxes & service fees</p></div><strong className="text-xl">{amount}</strong></div><button onClick={handlePay} disabled={paying || (method === 'card' && card.length !== 4)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0860c9] py-4 text-sm font-semibold text-white shadow-lg shadow-blue-600/15 hover:bg-blue-700 disabled:opacity-50 cursor-pointer">{paying ? 'Saving...' : method === 'cash' ? 'Confirm Booking' : `Demo Pay ${amount}`}<ArrowRight size={18} /></button></footer>
+      <footer className="shrink-0 px-5 pb-3 pt-1"><div className="mb-4 flex items-center justify-between"><div><p className="text-[11px] text-[#91a1b8]">Total Amount</p><p className="mt-1 text-[8px] text-emerald-600">Includes taxes & service fees</p></div><strong className="text-xl">{amount}</strong></div><button onClick={handlePay} disabled={paying} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0860c9] py-4 text-sm font-semibold text-white shadow-lg shadow-blue-600/15 hover:bg-blue-700 disabled:opacity-50 cursor-pointer">{paying ? 'Saving...' : method === 'card' ? 'Continue to Card' : method === 'online' ? 'Continue to Online Payment' : method === 'cash' ? 'Confirm Booking' : `Demo Pay ${amount}`}<ArrowRight size={18} /></button></footer>
     </section>
   );
 }

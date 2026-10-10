@@ -31,8 +31,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
   onBack,
 }) => {
   return (
-    <div className="w-full flex flex-col justify-between h-full min-h-full bg-white overflow-hidden flex-1">
-      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar pb-4">
+    <div className="w-full min-h-0 flex flex-col bg-white overflow-hidden flex-1">
+      <div className="min-h-0 flex-1 flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar pb-4">
         <div className="absolute top-0 left-0 right-0 z-30">
           <IOSStatusBar dark={false} />
         </div>
@@ -44,6 +44,23 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
             src={image}
           />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-900/40 to-transparent pointer-events-none" />
+
+          <div className="absolute top-12 left-5 z-20 flex items-center gap-2">
+            {pageNumber > 1 && onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="w-8 h-8 rounded-full bg-white/90 hover:bg-white active:scale-90 text-slate-800 flex items-center justify-center shadow-sm backdrop-blur-md border border-white/60 transition-all cursor-pointer"
+                aria-label="Back"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              </button>
+            )}
+            <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-white/60">
+              <img alt="HomeMate Brand Logo" className="w-5 h-5 rounded-md object-contain" src={LOGO_URL} />
+              <span className="text-xs font-bold text-slate-800 tracking-wide">HomeMate</span>
+            </div>
+          </div>
 
           <div className="absolute top-12 right-5 z-20 flex items-center gap-2">
             <button
@@ -84,23 +101,24 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
             </ul>
           </div>
 
-          <div className="flex items-center justify-center gap-2 py-1">
+          <div aria-label={`Onboarding step ${pageNumber} of ${totalPages}`} className="flex items-center justify-center gap-2 py-1">
             {Array.from({ length: totalPages }).map((_, index) => (
-              <button
+              <span
                 key={index}
-                onClick={() => index < pageNumber - 1 && onSkip()}
-                className={`transition-all duration-300 cursor-pointer ${
+                className={`transition-all duration-300 ${
                   pageNumber === index + 1 ? 'w-6 h-2 rounded-full bg-blue-600' : 'w-2 h-2 rounded-full bg-slate-200 hover:bg-slate-300'
                 }`}
                 aria-label={`Onboarding step ${index + 1}`}
+                aria-current={pageNumber === index + 1 ? 'step' : undefined}
               />
             ))}
           </div>
         </section>
       </div>
 
-      <footer className="px-6 pt-2 pb-6 bg-white border-t border-slate-50 flex flex-col items-center">
+      <footer className="shrink-0 px-6 pt-2 pb-6 bg-white border-t border-slate-50 flex flex-col items-center">
         <button
+          type="button"
           onClick={onNext}
           className="w-full h-12 py-3 px-6 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
         >

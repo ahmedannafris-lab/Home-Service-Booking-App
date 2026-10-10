@@ -1,6 +1,5 @@
 import React from 'react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
-import { LOGO_URL } from '../../data/mockData';
 
 interface OnboardingScreenProps {
   pageNumber: number;
@@ -45,23 +44,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
             src={image}
           />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-900/40 to-transparent pointer-events-none" />
-
-          <div className="absolute top-12 left-5 z-20 flex items-center gap-2">
-            {(pageNumber > 1 || onBack) && (
-              <button
-                type="button"
-                onClick={onBack}
-                className="w-8 h-8 rounded-full bg-white/90 hover:bg-white active:scale-90 text-slate-800 flex items-center justify-center shadow-sm backdrop-blur-md border border-white/60 transition-all cursor-pointer"
-                aria-label="Back"
-              >
-                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              </button>
-            )}
-            <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-white/60">
-              <img alt="HomeMate Brand Logo" className="w-5 h-5 rounded-md object-contain" src={LOGO_URL} />
-              <span className="text-xs font-bold text-slate-800 tracking-wide">HomeMate</span>
-            </div>
-          </div>
 
           <div className="absolute top-12 right-5 z-20 flex items-center gap-2">
             <button

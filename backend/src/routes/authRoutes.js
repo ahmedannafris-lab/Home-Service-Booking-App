@@ -78,24 +78,27 @@ router.post(
 router.post(
   "/login",
   [
-    body("email")
-      .isString()
-      .withMessage("Email is required")
-      .bail()
-      .trim()
-      .isEmail()
-      .withMessage("Enter a valid email"),
-
     body("password")
       .isString()
       .withMessage("Password is required")
       .bail()
       .notEmpty()
       .withMessage("Password is required"),
+    body("role")
+      .optional()
+      .isIn(["customer", "provider", "admin"])
+      .withMessage("Invalid role"),
   ],
   (req, res, next) => {
-    const errors = validationResult(req);
+    const identifier = req.body.identifier || req.body.email;
+    if (!identifier || typeof identifier !== "string" || !identifier.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Email or phone number is required",
+      });
+    }
 
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,

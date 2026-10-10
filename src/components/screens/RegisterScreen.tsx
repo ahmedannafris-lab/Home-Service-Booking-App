@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { IOSStatusBar } from '../common/iOSStatusBar';
 import { LOGO_URL } from '../../data/mockData';
+import { API_BASE_URL } from '../../config/api';
 
 interface RegisterScreenProps {
   onBack: () => void;
@@ -68,7 +69,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
     setErrorMsg(null);
     setIsSubmitting(true);
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -86,7 +87,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
         setErrorMsg(details || data.message || 'Unable to create account');
         return;
       }
-      const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+      const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
